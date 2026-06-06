@@ -162,6 +162,8 @@
     background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:13px 14px;position:relative;overflow:hidden}
   .match.live{border-color:rgba(255,59,92,.35)}
   .match.live::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--live)}
+  .match.live .score{cursor:pointer;border-radius:9px;transition:background .15s}
+  .match.live .score:hover{background:rgba(124,150,220,.10)}
   .gband{position:absolute;top:0;right:0;font-family:'Barlow Semi Condensed';font-size:9.5px;font-weight:700;
     letter-spacing:.12em;padding:3px 8px;border-bottom-left-radius:8px;color:#0a0e1a}
   /* knockout tiers — distinct + escalating; glow reserved for the Final only */
@@ -243,6 +245,14 @@
   #tip .tl.win .vp{color:var(--gA)}
   #tip .tl.done .nm{color:var(--ink-faint)}
   #tip .tl.done .nm .fl{opacity:.3;filter:grayscale(1)}
+  /* live "if score holds" projection rows */
+  #tip .tl .gain{font-family:'Anton';font-size:15px;color:#36d399;letter-spacing:.5px}
+  #tip .tl .gain small{font-family:'Barlow Semi Condensed';font-size:9px;color:var(--ink-faint);margin-left:2px;letter-spacing:.1em}
+  #tip .tl .rkmv{display:inline-flex;align-items:baseline;gap:7px;justify-content:flex-end;min-width:62px}
+  #tip .tl .rkmv .ord{font-family:'Anton';font-weight:400;font-size:13px;color:var(--ink-dim)}
+  #tip .tl .mv{font-family:'Barlow Semi Condensed';font-weight:700;font-size:12px;letter-spacing:.04em;text-align:right;min-width:26px}
+  #tip .tl .mv.up{color:#36d399}
+  #tip .tl .mv.flat{color:var(--ink-faint)}
   #tip .tt-foot{padding:8px 13px;border-top:1px solid var(--line);font-family:'Barlow Semi Condensed';
     font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
 
@@ -310,6 +320,7 @@
   <div class="legend">
     <span><b>Hover a manager</b> → their points by team <span class="tapnote">(tap on mobile)</span></span>
     <span><b>Hover a team</b> → who owns it &amp; their standing <span class="tapnote">(tap on mobile)</span></span>
+    <span><b>Hover a live score</b> → projected pts if it holds <span class="tapnote">(tap on mobile)</span></span>
     <span><b>Scoring:</b> Group W 3 / D 1 · KO win R32 3 · R16 6 · QF 9 · SF 12 · Final 15</span>
   </div>
 </div>
@@ -701,7 +712,7 @@ function matchCard(m,isLive){
   return `<div class="match${isLive?' live':''}">
     <span class="gband ${si.cls}"${bandStyle}>${si.text}</span>
     <div class="team home">${teamChip(m.home)}</div>
-    <div class="score ${m.status}">${scoreHtml}${clock}</div>
+    <div class="score ${m.status}"${isLive?` data-type="liveproj" data-mi="${MATCHES.indexOf(m)}"`:''}>${scoreHtml}${clock}</div>
     <div class="team away">${teamChip(m.away)}</div>
   </div>`;
 }
@@ -756,11 +767,76 @@ function teamTip(team){
     <div class="tt-foot">owners &amp; their standing</div>`;
 }
 
+// Points each side would LOCK IN if the current (live) score were the final result.
+// Same rules as scoring: group 3/1/0; knockout = stage points to the leader (none while level).
+function liveResultPts(m){
+  const out = {};
+  if(!m) return out;
+  const hs = m.hs||0, as = m.as||0;
+  if(m.stage==='group'){
+    if(hs>as){ out[m.home]=3; out[m.away]=0; }
+    else if(hs<as){ out[m.home]=0; out[m.away]=3; }
+    else { out[m.home]=1; out[m.away]=1; }
+  } else if(m.stage==='3P'){
+    out[m.home]=0; out[m.away]=0;                  // 3rd-place match awards nothing
+  } else {                                          // knockout
+    const pts = KO_PTS[m.stage]||0;
+    if(hs>as){ out[m.home]=pts; out[m.away]=0; }
+    else if(hs<as){ out[m.home]=0; out[m.away]=pts; }
+    else { out[m.home]=0; out[m.away]=0; }          // level KO -> no winner yet
+  }
+  return out;
+}
+
+// "If this score holds" projection for a live match: who gains points and how far they climb.
+function liveProjTip(m){
+  const gain = liveResultPts(m);
+  const base = globalStandings();                                   // confirmed standings
+  const proj = base.map(r=>{
+    const add = r.teams.reduce((s,t)=> s + (gain[t]||0), 0);        // pts from THIS match only
+    return {manager:r.manager, poolId:r.poolId, teams:r.teams, cur:r.rank, pts:r.pts+add, add};
+  });
+  // re-rank with the projected points (same dense ranking as globalStandings)
+  let rank=0,last=null,seen=0;
+  [...proj].sort((a,b)=> b.pts-a.pts || a.manager.localeCompare(b.manager))
+    .forEach(p=>{seen++; if(p.pts!==last){rank=seen;last=p.pts;} p.proj=rank;});
+  const movers = proj.filter(p=>p.add>0)
+    .sort((a,b)=> (b.cur-b.proj)-(a.cur-a.proj) || a.proj-b.proj);  // biggest climb first
+
+  const round = m.stage==='group' ? `Group ${m.group||''}`.trim()
+              : m.stage==='3P'    ? '3rd place'
+              : `${m.stage} · ${KO_PTS[m.stage]||0} pts`;
+  const head = `<div class="tt-h">
+      <span class="acc" style="background:var(--live)"></span>
+      <div><div class="ttl">${abbr(m.home)} ${m.hs}–${m.as} ${abbr(m.away)}</div>
+           <div class="sub">${round} · if score holds · ${m.minute}'</div></div>
+    </div>`;
+  let body;
+  if(!movers.length){
+    const why = m.stage==='3P' ? '3rd-place match — no points'
+              : (m.hs===m.as)  ? 'Level — no points until a winner'
+              : 'No rostered teams affected';
+    body = `<div class="tt-b"><div class="tl"><span class="pl">${why}</span></div></div>`;
+  } else {
+    body = `<div class="tt-b">${movers.map(p=>{
+      const owned = [m.home,m.away].find(t=> gain[t]>0 && p.teams.includes(t));
+      const jump = p.cur - p.proj;
+      const mv = jump>0 ? `<span class="mv up">▲${jump}</span>` : `<span class="mv flat">—</span>`;
+      return `<div class="tl" style="grid-template-columns:1fr auto auto">
+        <span class="nm"><span class="fl">${FLAG[owned]||'🏳️'}</span>${esc(p.manager)}</span>
+        <span class="gain">+${p.add}<small>PTS</small></span>
+        <span class="rkmv"><b class="ord">${ord(p.proj)}</b>${mv}</span>
+      </div>`;
+    }).join('')}</div>`;
+  }
+  return head + body + `<div class="tt-foot">projected · if score holds</div>`;
+}
+
 function showTip(target,x,y){
   const type = target.dataset.type;
-  tip.innerHTML = type==='manager'
-    ? managerTip(target.dataset.manager, target.dataset.pool)
-    : teamTip(target.dataset.team);
+  tip.innerHTML = type==='manager'  ? managerTip(target.dataset.manager, target.dataset.pool)
+                : type==='liveproj' ? liveProjTip(MATCHES[+target.dataset.mi])
+                : teamTip(target.dataset.team);
   tip.classList.add('on');
   moveTip(x,y);
 }
@@ -786,7 +862,7 @@ if(canHover){
   document.addEventListener('click',e=>{
     const t = e.target.closest('[data-type]');
     if(t){
-      const key = t.dataset.type+(t.dataset.manager||t.dataset.team)+(t.dataset.pool||'');
+      const key = t.dataset.type+(t.dataset.manager||t.dataset.team||t.dataset.mi||'')+(t.dataset.pool||'');
       if(pinned===key){ hideTip(); return; }
       pinned=key;
       const rect = t.getBoundingClientRect();
