@@ -85,7 +85,10 @@
   @media(min-width:901px){
     .grid{align-items:stretch}
     .grid>.panel{display:flex;flex-direction:column}
-    .standings{max-height:none;flex:1 1 auto;min-height:0}
+    /* overflow:visible (not a scroll box) so the rows expand into the frame and
+       grow it as needed instead of scrolling inside a short sub-area when zoomed.
+       The parent .panel has overflow:hidden, which still clips the hover nudge. */
+    .standings{max-height:none;flex:1 1 auto;overflow:visible}
   }
 
   .panel{background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
