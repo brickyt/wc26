@@ -588,7 +588,9 @@ function render(){
     const pg = POOL_GRP[r.poolId];
     const num = (r.poolName.match(/\d+/) || [''])[0];
     const badge = `<span class="pbadge" style="background:var(${GCOLOR[pg]});color:${GTX[pg]}">GRP ${num}</span>`;
-    const flags = `<span class="rflags">${r.teams.map(t=>
+    // Alive flags first, then faded; roster order preserved within each group.
+    const orderedTeams = [...r.teams.filter(stillAlive), ...r.teams.filter(t=>!stillAlive(t))];
+    const flags = `<span class="rflags">${orderedTeams.map(t=>
         `<span class="rf${stillAlive(t)?'':' done'}">${FLAG[t]||'🏳️'}</span>`).join('')}</span>`;
     return `<div class="row${lead?' leader':''}" data-type="manager" data-pool="${r.poolId}" data-manager="${esc(r.manager)}">
       <span class="rk">${r.rank}</span>
