@@ -132,6 +132,11 @@ function mapEvent(ev, entries, unresolved) {
     m.hs = parseInt((homeC && homeC.score) || '0', 10) || 0;
     m.as = parseInt((awayC && awayC.score) || '0', 10) || 0;
   }
+  if (status === 'final') {
+    // ESPN's authoritative result flag — correct even when a KO is decided on penalties
+    // (where hs/as are level). Used by the page to know who advanced.
+    m.winner = (homeC && homeC.winner) ? 'home' : (awayC && awayC.winner) ? 'away' : null;
+  }
   if (status === 'live') {
     const dc = ((c.status && c.status.displayClock) || '').replace(/[^0-9]/g, '');
     m.minute = dc ? parseInt(dc, 10) : Math.round((c.status && c.status.clock) || 0);

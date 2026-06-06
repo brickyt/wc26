@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>The North End · World Cup 2026 Scoreboard</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Semi+Condensed:wght@500;600;700&family=Saira:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -531,12 +532,41 @@ function teamPoints(team, {includeLive=false} = {}){
 }
 function managerPoints(teams){ return teams.reduce((s,t)=>s+teamPoints(t),0); }
 
-// A team is still "in it" if it appears in any upcoming (pre) or live match.
-// Group-stage casualties and knockout losers have no such match left -> faded.
-// 3rd-place participants stay lit because they still have a match to play.
-function stillAlive(team){
-  return MATCHES.some(m => (m.home===team || m.away===team) && (m.status==='pre' || m.status==='live'));
+/* Bracket-aware elimination. Faded = the team is definitively OUT.
+   We lean toward "lit" during the windows where ESPN hasn't filled the next
+   round's slots yet, so a team that has advanced never flickers as faded.
+     - has an upcoming/live match (incl. the 3rd-place game)      -> lit
+     - lost a knockout (advancement) match                        -> out
+     - group stage settled into the R32 and team isn't in it      -> out
+     - otherwise (transition gap / advanced, next slot still TBD) -> lit  */
+const KO_STAGES = new Set(['R32','R16','QF','SF','Final']);   // advancement rounds (3rd-place excluded)
+function wonMatch(team, m){
+  if(m.winner) return (m.winner==='home' && m.home===team) || (m.winner==='away' && m.away===team);
+  const isHome = m.home===team;                                // fallback (e.g. demo data): compare score
+  return (isHome ? m.hs : m.as) > (isHome ? m.as : m.hs);
 }
+function hasUpcoming(team){
+  return MATCHES.some(m => (m.home===team||m.away===team) && (m.status==='pre'||m.status==='live'));
+}
+function lostKO(team){
+  return MATCHES.some(m => KO_STAGES.has(m.stage) && m.status==='final'
+    && (m.home===team||m.away===team) && !wonMatch(team,m));
+}
+function inAnyKO(team){
+  return MATCHES.some(m => m.stage!=='group' && (m.home===team||m.away===team));
+}
+function r32Ready(){                                           // every R32 slot has a real team
+  const r = MATCHES.filter(m => m.stage==='R32');
+  return r.length>0 && r.every(m => m.home && m.away);
+}
+function isOut(team){
+  if(hasUpcoming(team)) return false;                         // still has a match to play
+  if(lostKO(team)) return true;                               // knocked out of the bracket
+  if(r32Ready() && !inAnyKO(team)) return true;              // group over, bracket set, didn't qualify
+  return false;                                               // gap / advanced but next slot still TBD
+}
+// Predicate consumed by the standings + popout rendering.
+function stillAlive(team){ return !isOut(team); }
 
 // standings per pool: [{manager, pts, rank}], sorted
 function allRows(){
