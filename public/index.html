@@ -249,10 +249,10 @@
   #tip .tl .gain{font-family:'Anton';font-size:15px;color:#36d399;letter-spacing:.5px}
   #tip .tl .gain small{font-family:'Barlow Semi Condensed';font-size:9px;color:var(--ink-faint);margin-left:2px;letter-spacing:.1em}
   #tip .tl .cr{font-family:'Anton';font-weight:400;font-size:15px;color:var(--ink-dim)}
-  #tip .tl .pg{display:inline-flex;align-items:baseline;gap:7px}
-  #tip .tl .nr{font-family:'Anton';font-weight:400;font-size:15px;color:#36d399}
+  #tip .tl .rt{display:inline-flex;align-items:baseline;gap:8px;justify-content:flex-end}
+  #tip .tl .nr{font-family:'Anton';font-weight:400;font-size:15px;color:#36d399;min-width:34px;text-align:right}
   #tip .tl .mv{font-family:'Barlow Semi Condensed';font-weight:700;font-size:12px;letter-spacing:.04em}
-  #tip.narrow{min-width:0}
+  #tip.proj{min-width:272px;max-width:340px}
   #tip .tl .mv.up{color:#36d399}
   #tip .tl .mv.flat{color:var(--ink-faint)}
   #tip .tt-foot{padding:8px 13px;border-top:1px solid var(--line);font-family:'Barlow Semi Condensed';
@@ -823,11 +823,10 @@ function liveProjTip(m){
     body = `<div class="tt-b">${movers.map(p=>{
       const jump = p.cur - p.proj;
       const mv = jump>0 ? `<span class="mv up">▲${jump}</span>` : `<span class="mv flat">—</span>`;
-      return `<div class="tl" style="grid-template-columns:auto 1fr auto auto">
+      return `<div class="tl" style="grid-template-columns:auto minmax(0,1fr) auto">
         <span class="cr">${ord(p.cur)}</span>
         <span class="nm">${esc(p.manager)}</span>
-        <span class="pg"><span class="gain">+${p.add}<small>PTS</small></span>${mv}</span>
-        <span class="nr">${ord(p.proj)}</span>
+        <span class="rt"><span class="gain">+${p.add}<small>PTS</small></span>${mv}<span class="nr">${ord(p.proj)}</span></span>
       </div>`;
     }).join('')}</div>`;
   }
@@ -839,7 +838,7 @@ function showTip(target,x,y){
   tip.innerHTML = type==='manager'  ? managerTip(target.dataset.manager, target.dataset.pool)
                 : type==='liveproj' ? liveProjTip(MATCHES[+target.dataset.mi])
                 : teamTip(target.dataset.team);
-  tip.classList.toggle('narrow', type==='liveproj');   // tighter width, just this popup
+  tip.classList.toggle('proj', type==='liveproj');     // wider name column + tight stat cluster
   tip.classList.add('on');
   moveTip(x,y);
 }
