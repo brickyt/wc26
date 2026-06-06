@@ -80,6 +80,13 @@
   /* ---------- Layout ---------- */
   .grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;align-items:start}
   @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  /* Desktop only: stretch the Standings frame to the row height so its bottom
+     lines up with the Completed frame. Mobile (single column) is untouched. */
+  @media(min-width:901px){
+    .grid{align-items:stretch}
+    .grid>.panel{display:flex;flex-direction:column}
+    .standings{max-height:none;flex:1 1 auto;min-height:0}
+  }
 
   .panel{background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
     border:1px solid var(--line);border-radius:16px;overflow:hidden;
@@ -246,7 +253,7 @@
 <div class="wrap">
   <header>
     <div class="brand">
-      <span class="kicker">The North End Podcast · Fantasy Draft</span>
+      <span class="kicker">The North End Podcast's Best Ball</span>
       <h1>World Cup <span class="yr">2026</span> Scoreboard</h1>
     </div>
     <div class="meta">
@@ -288,7 +295,7 @@
 
       <section class="panel">
         <div class="phead">
-          <h2>Completed</h2>
+          <h2>Completed Matches</h2>
           <span class="sub">results</span>
         </div>
         <div class="completed" id="completed"></div>
@@ -644,7 +651,7 @@ function render(){
 
   // ----- Live (always all live; not affected by Today toggle) -----
   const live = MATCHES.filter(m=>m.status==='live');
-  document.getElementById('livecount').textContent = live.length? `${live.length} in play` : '';
+  document.getElementById('livecount').textContent = live.length? `${live.length} matches in progress` : '';
   const lEl = document.getElementById('live');
   lEl.innerHTML = live.length ? live.map(m=>matchCard(m,true)).join('')
     : `<div class="empty">No matches in play right now.</div>`;
