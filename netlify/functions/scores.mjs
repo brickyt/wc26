@@ -82,11 +82,34 @@ function resolveTeam(t, unresolved) {
 }
 
 const LABEL2STAGE = {
-  'Group':'group', 'Round of 32':'R32', 'Rd of 16':'R16',
+  'Group':'group', 'Round of 32':'R32', 'Round of 16':'R16', 'Rd of 16':'R16',
   'Quarterfinals':'QF', 'Semifinals':'SF', '3rd-Place Match':'3P', 'Final':'Final',
 };
+
+/* Fixed 2026 stage windows (UTC), used as the primary source of the stage.
+   ESPN's leagues[0].calendar currently comes back EMPTY, so deriving the stage
+   from its labels would tag every match — including knockouts and the Final —
+   as 'group'. The tournament dates are published and final, so we key the stage
+   off each kickoff time instead. Each boundary sits in the idle gap between the
+   last match of one round and the first of the next, so it's robust to the exact
+   kickoff times. [stage, startInclusive, endExclusive]. */
+const STAGE_WINDOWS = [
+  ['group', '2026-06-11T00:00Z', '2026-06-28T12:00Z'],
+  ['R32',   '2026-06-28T12:00Z', '2026-07-04T12:00Z'],
+  ['R16',   '2026-07-04T12:00Z', '2026-07-08T12:00Z'],
+  ['QF',    '2026-07-08T12:00Z', '2026-07-13T00:00Z'],
+  ['SF',    '2026-07-13T00:00Z', '2026-07-16T12:00Z'],
+  ['3P',    '2026-07-16T12:00Z', '2026-07-19T12:00Z'],
+  ['Final', '2026-07-19T12:00Z', '2026-07-20T00:00Z'],
+];
+
 function stageOf(dateISO, entries) {
   const t = Date.parse(dateISO);
+  // Primary: fixed tournament windows (works even when ESPN's calendar is empty).
+  for (const [stage, s, e] of STAGE_WINDOWS) {
+    if (t >= Date.parse(s) && t < Date.parse(e)) return stage;
+  }
+  // Fallback: ESPN's own calendar labels, if it ever starts providing them.
   for (const e of entries) {
     if (t >= Date.parse(e.startDate) && t < Date.parse(e.endDate)) return LABEL2STAGE[e.label] || 'group';
   }
