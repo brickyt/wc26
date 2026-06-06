@@ -372,13 +372,26 @@ const POOLS = [
     'Cagle':['Spain','Netherlands','Croatia','Morocco','Switzerland','Sweden','Czechia','Australia'],
     'Chris C.':['France','Germany','Belgium','Colombia','Uruguay','Türkiye','Scotland','Algeria'],
   }},
-  { id:'p2', name:'Group 3', managers:{
+  { id:'p2', name:'Group 2', managers:{
+    'Shnorb Jones':['France','Germany','Colombia','Norway','Switzerland','Croatia',"Côte d'Ivoire",'Paraguay'],
+    'Scott H.':['Brazil','Argentina','Morocco','USA','Ecuador','Mexico','Czechia','Bosnia & Herzegovina'],
+    'Derrick':['Spain','Netherlands','Belgium','Japan','Canada','Austria','Egypt','Scotland'],
+    'Sarah':['England','Portugal','Uruguay','Türkiye','Senegal','South Korea','Sweden','Ghana'],
+  }},
+  { id:'p3', name:'Group 3', managers:{
     'Brian':['France','Brazil','Morocco','Croatia','USA','Austria','Iran','Australia'],
     'Ryan':['Germany','Netherlands','Türkiye','Senegal','Uruguay','Japan',"Côte d'Ivoire",'Ghana'],
     'Ariaga II':['England','Argentina','Colombia','Ecuador','Mexico','Canada','Scotland','Sweden'],
     'Tim':['Spain','Portugal','Belgium','Norway','Switzerland','Egypt','South Korea','Czechia'],
   }},
-  { id:'p3', name:'Group 4', managers:{
+  { id:'p4', name:'Group 4', managers:{
+    'Kyle':['France','Norway','Morocco','Japan','Senegal','Croatia',"Côte d'Ivoire",'Scotland'],
+    'PMike':['Brazil','Portugal','USA','Colombia','Egypt','Canada','Paraguay','New Zealand'],
+    'Turbo Trevor':['England','Argentina','Belgium','Switzerland','Mexico','Türkiye','South Korea','Bosnia & Herzegovina'],
+    'Texwrecks':['Spain','Germany','Netherlands','Uruguay','Ecuador','Sweden','Austria','Czechia'],
+  }},
+  // Group 5 is still drafting — add its { id:'p5', name:'Group 5', managers:{...} } block when that image arrives.
+  { id:'p6', name:'Group 6', managers:{
     'Dave R.':['Spain','Brazil','Norway','Colombia','Türkiye','Switzerland','Austria','South Korea'],
     'Birdman':['Argentina','Germany','Netherlands','Croatia','Canada','Egypt','Scotland','Saudi Arabia'],
     'Aries':['France','Belgium','Uruguay','USA','Ecuador',"Côte d'Ivoire",'Sweden','Ghana'],
@@ -386,8 +399,8 @@ const POOLS = [
   }},
 ];
 const YOU = 'Ariaga II';
-// Pool badge colour: reuse the A/B/C group palette for pools 1/2/3.
-const POOL_GRP = {p1:'A', p2:'B', p3:'C'};
+// Pool badge colour: reuse the group palette (A..F) so each pool reads distinctly.
+const POOL_GRP = {p1:'A', p2:'B', p3:'C', p4:'D', p5:'E', p6:'F'};
 
 // ----- Scoring -----
 const KO_PTS = {R32:3, R16:6, QF:9, SF:12, Final:15};
