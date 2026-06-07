@@ -242,7 +242,6 @@
   #tip .tl .vp small{font-family:'Barlow Semi Condensed';font-size:9px;color:var(--ink-faint);margin-left:2px;letter-spacing:.1em}
   #tip .tl .pl{font-family:'Barlow Semi Condensed';font-size:10px;color:var(--ink-faint);letter-spacing:.06em}
   #tip .tl .rkpill{font-family:'Anton';font-size:12px;color:var(--ink-dim);min-width:30px;text-align:right}
-  #tip .tl.win .vp{color:var(--gA)}
   #tip .tl.done .nm{color:var(--ink-faint)}
   #tip .tl.done .nm .fl{opacity:.3;filter:grayscale(1)}
   /* live "if score holds" projection rows */
@@ -744,7 +743,7 @@ let pinned = null;
 function managerTip(manager, poolId){
   const me = globalStandings().find(r=>r.manager===manager && r.poolId===poolId);
   const teams = me.teams.map(t=>({t,p:teamPoints(t)})).sort((a,b)=>b.p-a.p);
-  const body = teams.map(o=>`<div class="tl${o.p>=3?' win':''}${stillAlive(o.t)?'':' done'}" style="grid-template-columns:1fr auto">
+  const body = teams.map(o=>`<div class="tl${stillAlive(o.t)?'':' done'}" style="grid-template-columns:1fr auto">
       <span class="nm"><span class="fl">${FLAG[o.t]||'🏳️'}</span>${esc(o.t)}</span>
       <span class="vp">${o.p}<small>PT</small></span>
     </div>`).join('');
