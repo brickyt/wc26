@@ -826,8 +826,8 @@ function liveProjTip(m){
     </div>`;
   let body;
   if(!movers.length){
-    const why = m.stage==='3P' ? '3rd-place match — no points'
-              : (m.hs===m.as && !m.pk)  ? 'Level — no points until a winner'
+    const why = m.stage==='3P' ? '3rd place match awards no points'
+              : (m.hs===m.as && !m.pk)  ? 'No Draws in Knockout games'
               : 'No rostered teams affected';
     body = `<div class="tt-b"><div class="tl"><span class="pl">${why}</span></div></div>`;
   } else {
