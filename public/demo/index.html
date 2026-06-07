@@ -447,7 +447,9 @@ const FEED_URL = '/api/scores';                       // live ESPN feed (Cloudfl
 
 // "Today" anchor: real local date when live; fixed QF day in the demo so badges show.
 const TODAY = DEMO ? '2026-07-05' : new Date().toLocaleDateString('en-CA');
-const dayOf = m => (m.dt ? m.dt.slice(0,10) : null);
+// Use the match's LOCAL calendar date (not the raw UTC slice) so "Today only"
+// matches the device's day, consistent with the locally-displayed kickoff times.
+const dayOf = m => (m.dt ? new Date(m.dt).toLocaleDateString('en-CA') : null);
 const isToday = m => dayOf(m) === TODAY;
 
 const MOCK_MATCHES = [
@@ -460,10 +462,10 @@ const MOCK_MATCHES = [
   {stage:'group',group:'C',home:'Morocco',away:'Haiti',hs:2,as:1,status:'final',dt:'2026-06-14T13:00:00'},
   {stage:'group',group:'D',home:'USA',away:'Türkiye',hs:1,as:1,status:'final',dt:'2026-06-14T22:00:00'},
   {stage:'group',group:'D',home:'Paraguay',away:'Australia',hs:2,as:1,status:'final',dt:'2026-06-15T16:00:00'},
-  {stage:'group',group:'E',home:'Germany',away:"Côte d'Ivoire",hs:2,as:1,status:'final',dt:'2026-06-15T13:00:00'},
+  {stage:'group',group:'E',home:'Germany',away:"Côte d'Ivoire",hs:1,as:1,status:'final',dt:'2026-06-15T13:00:00'},
   {stage:'group',group:'E',home:'Ecuador',away:'Curaçao',hs:1,as:0,status:'final',dt:'2026-06-15T19:00:00'},
   {stage:'group',group:'F',home:'Netherlands',away:'Tunisia',hs:2,as:0,status:'final',dt:'2026-06-15T16:00:00'},
-  {stage:'group',group:'F',home:'Japan',away:'Sweden',hs:1,as:0,status:'final',dt:'2026-06-15T22:00:00'},
+  {stage:'group',group:'F',home:'Japan',away:'Sweden',hs:0,as:1,status:'final',dt:'2026-06-15T22:00:00'},
   {stage:'group',group:'G',home:'Belgium',away:'New Zealand',hs:3,as:1,status:'final',dt:'2026-06-13T13:00:00'},
   {stage:'group',group:'G',home:'Egypt',away:'Iran',hs:1,as:1,status:'final',dt:'2026-06-13T16:00:00'},
   {stage:'group',group:'H',home:'Spain',away:'Cape Verde',hs:3,as:0,status:'final',dt:'2026-06-14T13:00:00'},
@@ -498,7 +500,7 @@ const MOCK_MATCHES = [
   {stage:'R16',home:'Belgium',away:'Mexico',hs:2,as:1,status:'final',dt:'2026-07-03T22:00:00'},
 
   // ===== COMPLETED · QUARTERFINAL · earlier TODAY (Jul 5) — QF badge, +9 =====
-  {stage:'QF',home:'Spain',away:'Argentina',hs:2,as:1,status:'final',dt:'2026-07-05T10:00:00'},
+  {stage:'QF',home:'Spain',away:'Argentina',hs:1,as:1,status:'live',pk:{h:3,a:2},dt:'2026-07-05T10:00:00'},  // live, in a penalty shootout (Spain leads 3-2)
   {stage:'QF',home:'France',away:'Colombia',hs:3,as:0,status:'final',dt:'2026-07-05T12:00:00'},
 
   // ===== LIVE · QUARTERFINAL · now (Jul 5) — QF badge, +9, live =====
@@ -630,6 +632,8 @@ function ownersOf(team){
     .map(r=>({manager:r.manager, rank:r.rank, pts:r.pts}));
 }
 const ord = n => n + (({1:'st',2:'nd',3:'rd'})[((n%100)>10&&(n%100)<14)?0:(n%10)] || 'th');
+// Singular/plural points label: 1 -> "PT", everything else (0, 2+) -> "PTS".
+const ptl = n => Math.abs(n)===1 ? 'PT' : 'PTS';
 
 // Stage label + visual tier for a match (group letter, or KO round + points).
 function stageInfo(m){
@@ -638,7 +642,7 @@ function stageInfo(m){
   const label = m.stage==='Final' ? 'FINAL' : m.stage;     // R32 / R16 / QF / SF / FINAL
   const pts = KO_PTS[m.stage] || 0;
   const tier = ({R32:'r32',R16:'r16',QF:'qf',SF:'sf',Final:'fin'})[m.stage] || 'r32';
-  return {text:`${label} · ${pts} PTS`, cls:'ko '+tier};
+  return {text:`${label} · ${pts} ${ptl(pts)}`, cls:'ko '+tier};
 }
 // Inline stage pill (used in Upcoming + Completed rows).
 function stagePill(m){
@@ -666,7 +670,7 @@ function render(){
     return `<div class="row${lead?' leader':''}" data-type="manager" data-pool="${r.poolId}" data-manager="${esc(r.manager)}">
       <span class="rk">${r.rank}</span>
       <span class="nm"><span class="mgr">${esc(r.manager)}</span>${badge}${flags}</span>
-      <span class="pts">${r.pts}<small>PTS</small></span>
+      <span class="pts">${r.pts}<small>${ptl(r.pts)}</small></span>
     </div>`;
   }).join('');
 
@@ -714,7 +718,8 @@ function matchCard(m,isLive){
   const scoreHtml = (m.status==='pre')
     ? `<div class="sc">vs</div>`
     : `<div class="sc">${m.hs}<span class="x">–</span>${m.as}</div>`;
-  const clock = isLive ? `<div class="clock"><span class="d"></span>${m.minute}'</div>` : '';
+  // For a shootout, show the PK score where the live clock normally goes.
+  const clock = isLive ? `<div class="clock"><span class="d"></span>${m.pk ? `PK ${m.pk.h}\u2013${m.pk.a}` : `${m.minute}'`}</div>` : '';
   return `<div class="match${isLive?' live':''}">
     <span class="gband ${si.cls}"${bandStyle}>${si.text}</span>
     <div class="team home">${teamChip(m.home)}</div>
@@ -745,7 +750,7 @@ function managerTip(manager, poolId){
   const teams = me.teams.map(t=>({t,p:teamPoints(t)})).sort((a,b)=>b.p-a.p);
   const body = teams.map(o=>`<div class="tl${stillAlive(o.t)?'':' done'}" style="grid-template-columns:1fr auto">
       <span class="nm"><span class="fl">${FLAG[o.t]||'🏳️'}</span>${esc(o.t)}</span>
-      <span class="vp">${o.p}<small>PT</small></span>
+      <span class="vp">${o.p}<small>${ptl(o.p)}</small></span>
     </div>`).join('');
   return `<div class="tt-h">
       <span class="acc" style="background:var(--gold)"></span>
@@ -762,12 +767,12 @@ function teamTip(team){
   const body = owners.length ? owners.map(o=>`<div class="tl">
       <span class="rkpill">${ord(o.rank)}</span>
       <span class="nm">${esc(o.manager)}</span>
-      <span class="pl">${o.pts} pts</span>
+      <span class="pl">${o.pts} ${ptl(o.pts).toLowerCase()}</span>
     </div>`).join('') : `<div class="tl"><span class="pl">Not on any roster.</span></div>`;
   return `<div class="tt-h">
       <span class="acc" style="background:var(--gold)"></span>
       <span class="fl">${FLAG[team]||'🏳️'}</span>
-      <div><div class="ttl">${esc(team)}</div><div class="sub">${tp} pts earned</div></div>
+      <div><div class="ttl">${esc(team)}</div><div class="sub">${tp} ${ptl(tp).toLowerCase()} earned</div></div>
     </div>
     <div class="tt-b">${body}</div>
     <div class="tt-foot">owners &amp; their standing</div>`;
@@ -787,9 +792,11 @@ function liveResultPts(m){
     out[m.home]=0; out[m.away]=0;                  // 3rd-place match awards nothing
   } else {                                          // knockout
     const pts = KO_PTS[m.stage]||0;
-    if(hs>as){ out[m.home]=pts; out[m.away]=0; }
-    else if(hs<as){ out[m.home]=0; out[m.away]=pts; }
-    else { out[m.home]=0; out[m.away]=0; }          // level KO -> no winner yet
+    const hw = m.pk ? m.pk.h > m.pk.a : hs > as;    // a penalty shootout decides a level KO
+    const aw = m.pk ? m.pk.a > m.pk.h : as > hs;
+    if(hw){ out[m.home]=pts; out[m.away]=0; }
+    else if(aw){ out[m.home]=0; out[m.away]=pts; }
+    else { out[m.home]=0; out[m.away]=0; }          // level KO, no shootout yet -> no winner
   }
   return out;
 }
@@ -807,20 +814,20 @@ function liveProjTip(m){
   [...proj].sort((a,b)=> b.pts-a.pts || a.manager.localeCompare(b.manager))
     .forEach(p=>{seen++; if(p.pts!==last){rank=seen;last=p.pts;} p.proj=rank;});
   const movers = proj.filter(p=>p.add>0)
-    .sort((a,b)=> (b.cur-b.proj)-(a.cur-a.proj) || a.proj-b.proj);  // biggest climb first
+    .sort((a,b)=> a.proj-b.proj || a.cur-b.cur);  // by projected standing, 1st -> last
 
   const round = m.stage==='group' ? `Group ${m.group||''}`.trim()
               : m.stage==='3P'    ? '3rd place'
-              : `${m.stage} · ${KO_PTS[m.stage]||0} pts`;
+              : `${m.stage} · ${KO_PTS[m.stage]||0} ${ptl(KO_PTS[m.stage]||0).toLowerCase()}`;
   const head = `<div class="tt-h">
       <span class="acc" style="background:var(--live)"></span>
       <div><div class="ttl">${abbr(m.home)} ${m.hs}–${m.as} ${abbr(m.away)}</div>
-           <div class="sub">${round} · if score holds · ${m.minute}'</div></div>
+           <div class="sub">${round} · if score holds · ${m.pk ? `PK ${m.pk.h}\u2013${m.pk.a}` : `${m.minute}'`}</div></div>
     </div>`;
   let body;
   if(!movers.length){
     const why = m.stage==='3P' ? '3rd-place match — no points'
-              : (m.hs===m.as)  ? 'Level — no points until a winner'
+              : (m.hs===m.as && !m.pk)  ? 'Level — no points until a winner'
               : 'No rostered teams affected';
     body = `<div class="tt-b"><div class="tl"><span class="pl">${why}</span></div></div>`;
   } else {
@@ -830,7 +837,7 @@ function liveProjTip(m){
       return `<div class="tl pj">
         <span class="cr">${ord(p.cur)}</span>
         <span class="nm">${esc(p.manager)}</span>
-        <span class="rt"><span class="gain">+${p.add}<small>PTS</small></span>${mv}<span class="nr">${ord(p.proj)}</span></span>
+        <span class="rt"><span class="gain">+${p.add}<small>${ptl(p.add)}</small></span>${mv}<span class="nr">${ord(p.proj)}</span></span>
       </div>`;
     }).join('')}</div>`;
   }

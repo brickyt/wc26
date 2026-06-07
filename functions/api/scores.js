@@ -134,6 +134,10 @@ function mapEvent(ev, entries, unresolved) {
   if (status !== 'pre') {
     m.hs = parseInt((homeC && homeC.score) || '0', 10) || 0;
     m.as = parseInt((awayC && awayC.score) || '0', 10) || 0;
+    // Penalty shootout (live or final): ESPN puts the PK tally in `shootoutScore`.
+    // The page shows it where the clock goes and credits the shootout leader.
+    const hpk = homeC && homeC.shootoutScore, apk = awayC && awayC.shootoutScore;
+    if (hpk != null || apk != null) m.pk = { h: Number(hpk) || 0, a: Number(apk) || 0 };
   }
   if (status === 'final') {
     // ESPN's authoritative result flag — correct even when a KO is decided on penalties
