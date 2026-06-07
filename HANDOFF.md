@@ -1,50 +1,50 @@
 # World Cup 2026 Scoreboard — Development Handoff
 
 A live, public, auto-updating fantasy scoreboard for **The North End Podcast World Cup Pool 2026**.
-Replaces the commissioner's manual Google Sheet. Built as a self-contained site; deploys free on Netlify.
+Replaces the commissioner's manual Google Sheet. Built as a self-contained site; deploys free on Cloudflare Pages.
 
-**Live now (mock data):** https://northendwc26.netlify.app/
-**Deployable package:** `northend-wc26.zip` (full site + serverless function)
+**Live site:** your Cloudflare Pages URL (e.g. `https://<project>.pages.dev/`)
 
 ---
 
 ## Current status
 - ✅ Front-end fully built and iterated (mobile + desktop).
-- ✅ Mock version deployed to Netlify (single-file drag-drop) — shows sample data.
 - ✅ ESPN feed verified against real 2026 data; team-join audit clean.
-- ✅ Netlify Function (live data) built and tested locally end-to-end.
-- ✅ Two-page package assembled (`northend-wc26.zip`).
-- ⏳ **Next:** deploy the package with the function (needs desktop — Git repo or Netlify CLI), then run pre-tournament smoke tests.
+- ✅ Live-data function built, then migrated to a Cloudflare Pages Function (`functions/api/scores.js`).
+- ✅ Rosters updated (Groups 1–4 and 6); Group 5 still drafting.
+- ⏳ **Next:** push to the Cloudflare Pages repo, then run the pre-tournament smoke tests below.
 
 ---
 
-## Package structure (`northend-wc26.zip`)
+## Project structure
 ```
-public/index.html        # LIVE page  (const DEMO = false; fetches the function)
+public/index.html        # LIVE page  (const DEMO = false; fetches /api/scores)
 public/demo/index.html   # DEMO page  (const DEMO = true; sample data, no network)
-netlify/functions/scores.mjs   # ESPN poller + mapper (server-side)
-netlify.toml             # publish=public, functions=netlify/functions, /api/scores alias
+public/_routes.json      # only /api/* invokes the function; static stays on the free tier
+functions/api/scores.js  # ESPN poller + mapper  ->  served at /api/scores
 README.md                # deploy + smoke-test steps
 ```
 The two HTML files are **identical except one line** (`const DEMO`). `false` = live, `true` = demo.
-Routes once deployed: `/` = live, `/demo/` = mockup, `/.netlify/functions/scores` = raw JSON feed.
+Routes once deployed: `/` = live, `/demo/` = mockup, `/api/scores` = raw JSON feed.
 
 ---
 
-## Deploy steps (desktop, ~5 min)
-Drag-drop deploys do **not** reliably include Netlify Functions — use one of:
-1. **GitHub repo** (recommended): push this folder, connect it in Netlify, point the existing
-   `northendwc26` site at the repo. Build command: none. Publish dir: `public`. Auto-deploys on push.
-2. **Netlify CLI:** `npm i -g netlify-cli` then `netlify deploy --prod` from the folder.
+## Deploy steps (Cloudflare Pages, ~5 min)
+1. Push this folder to GitHub.
+2. Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git**, pick the repo.
+3. Build command: none. Build output directory: `public`. Functions auto-detected from `functions/`.
+   Auto-deploys on every push.
+4. Site is at `https://<project>.pages.dev` (add a custom domain under **Custom domains** if desired).
 
 ## Smoke tests (do before June 11, 2026)
-1. Open `https://<site>/.netlify/functions/scores` → JSON with `matches` full of real fixtures
-   (all `status:"pre"`) and **`unresolved: []`**. If `unresolved` is non-empty, add those teams to
-   `NAME_ALIASES` or `ID_OVERRIDE` in `scores.mjs`.
+1. Open `https://<site>/api/scores` → JSON with `matches` full of real fixtures (all `status:"pre"`)
+   and `unresolved` containing **only** the TBD bracket placeholders (group winners, "Round of 32 N
+   Winner", etc.). If a real **country** appears in `unresolved`, add it to `NAME_ALIASES` or
+   `ID_OVERRIDE` in `functions/api/scores.js`.
 2. Open `/` → Upcoming fills with the real 48-team schedule; feed pill reads "Live · ESPN";
    Live/Completed empty; standings all 0.
-3. (Optional) Live/final branch: temporarily change the league slug in `scores.mjs` to `usa.1` (MLS,
-   in season) to watch a real in-progress match map to `live`/`final`, then switch back to `fifa.world`.
+3. (Optional) Live/final branch: temporarily change the league slug in `functions/api/scores.js` to
+   `usa.1` (MLS, in season) to watch a real in-progress match map to `live`/`final`, then switch back to `fifa.world`.
 4. `/demo/` still shows the sample QF-day data with the gold "Demo · sample data" pill, no network.
 
 When the tournament starts, **no changes needed** — the function flips matches to live/final and the
@@ -53,13 +53,13 @@ cadence tightens automatically.
 ---
 
 ## Architecture
-- **Static SPA + one serverless function.** The page calls `/.netlify/functions/scores`. The function
-  makes **one** call to ESPN's unofficial scoreboard for the whole tournament, maps each match to our
-  shape, and returns JSON. The response is **CDN-cached** so every visitor shares a single ESPN call.
-- **Adaptive cadence** (set via `netlify-cdn-cache-control: s-maxage`):
-  60s while any match is live or kickoff is within 10 min; otherwise sleep until the next kickoff
-  (cap 30 min); 1 hour once the tournament is over. The client mirrors this with `pollState()` and
-  re-syncs on tab `visibilitychange`.
+- **Static SPA + one serverless function.** The page calls `/api/scores` (a Cloudflare Pages
+  Function). The function makes **one** call to ESPN's unofficial scoreboard for the whole
+  tournament, maps each match to our shape, and returns JSON. The response is stored at the edge
+  via the Cache API (`caches.default`) so every visitor on a Cloudflare colo shares a single ESPN call.
+- **Adaptive cadence** (cache TTL): 60s while any match is live or kickoff is within 10 min;
+  otherwise sleep until the next kickoff (cap 30 min); 1 hour once the tournament is over. The
+  client mirrors this with `pollState()` and re-syncs on tab `visibilitychange`.
 - **Fallback:** on a failed fetch the live page keeps last-good data and shows "Reconnecting…".
 - **Future option:** keep the commissioner's Google Sheet as a manual override layer (not built yet).
 
@@ -161,6 +161,6 @@ G `#ef6193` · H `#64fcdb` · I `#aa46bb` · J `#317286` · K `#fa3d08` · L `#4
 ## Notes / conventions
 - Demo "today" is anchored to a quarterfinal day (`2026-07-05`) so all badge tiers are visible; the live
   page uses the real local date.
-- If rosters, groups, codes, or colors change, update **both** the HTML and `scores.mjs` (data is mirrored).
+- If rosters, groups, codes, or colors change, update **both** the HTML and `functions/api/scores.js` (data is mirrored).
 - The latest single-file iteration before packaging was `scoreboard-v10.html` (filenames were bumped
   v2→v10 only to dodge a viewer cache; irrelevant once in Git).

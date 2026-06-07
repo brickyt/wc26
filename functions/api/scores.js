@@ -1,13 +1,16 @@
 /* =================================================================
-   ESPN -> scoreboard feed  (Netlify Function, runs server-side)
+   ESPN -> scoreboard feed  (Cloudflare Pages Function: GET /api/scores)
    -----------------------------------------------------------------
    - ONE request to ESPN's unofficial scoreboard per cache window.
-   - The CDN caches our JSON (s-maxage), so every visitor shares the
-     same single ESPN call — no per-client hammering of the endpoint.
+   - Read-through via the Cloudflare Cache API (caches.default): the first
+     request in a window fetches ESPN and stores the JSON at the edge;
+     every other visitor hitting the same colo is served the cached copy,
+     so ESPN is not hammered per client. match() is keyed on the URL and
+     ignores the client's `no-store`, which is exactly what we want.
    - Returns: { updated, matches:[...], unresolved:[...] }
-       match = { stage, group?, home, away, hs?, as?, status, dt, minute? }
+       match = { stage, group?, home, away, hs?, as?, status, dt, minute?, winner? }
        home/away are OUR team names (or null = TBD bracket slot).
-   - Cadence (s-maxage): 60s while live / near kickoff, else sleep to
+   - Cadence (cache TTL): 60s while live / near kickoff, else sleep to
      the next kickoff (cap 30 min), 1h once the tournament is over.
    ================================================================= */
 
@@ -155,7 +158,10 @@ function maxAge(matches) {
   return Math.min(secs, 1800);                     // sleep to next kickoff, cap 30 min
 }
 
-export default async () => {
+export async function onRequestGet({ request, waitUntil }) {
+  const cache = caches.default;
+  const cached = await cache.match(request);       // edge hit -> no ESPN call
+  if (cached) return cached;
   try {
     const r = await fetch(`${ESPN}?dates=${RANGE}&limit=${LIMIT}`, { headers: { accept: 'application/json' } });
     if (!r.ok) throw new Error('ESPN ' + r.status);
@@ -165,18 +171,22 @@ export default async () => {
     const matches = (data.events || []).map(ev => mapEvent(ev, entries, unresolved)).filter(Boolean);
     const body = JSON.stringify({ updated: new Date().toISOString(), matches, unresolved });
     const ma = maxAge(matches);
-    return new Response(body, {
+    const res = new Response(body, {
       headers: {
         'content-type': 'application/json',
         'access-control-allow-origin': '*',
-        'cache-control': 'public, max-age=30',
-        'netlify-cdn-cache-control': `public, s-maxage=${ma}, stale-while-revalidate=120`,
+        // The page fetches with cache:'no-store', so the browser never caches;
+        // the TTL below is what the edge Cache API keeps the shared copy for.
+        'cache-control': `public, max-age=${ma}`,
+        'cdn-cache-control': `public, s-maxage=${ma}, stale-while-revalidate=120`,
       },
     });
+    waitUntil(cache.put(request, res.clone()));    // store for the rest of this window
+    return res;
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e), matches: [] }), {
       status: 502,
       headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
     });
   }
-};
+}

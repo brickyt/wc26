@@ -249,12 +249,17 @@
   #tip .tl .gain{font-family:'Anton';font-size:15px;color:#36d399;letter-spacing:.5px}
   #tip .tl .gain small{font-family:'Barlow Semi Condensed';font-size:9px;color:var(--ink-faint);margin-left:2px;letter-spacing:.1em}
   #tip .tl .cr{font-family:'Anton';font-weight:400;font-size:15px;color:var(--ink-dim)}
-  #tip .tl .rt{display:inline-flex;align-items:baseline;gap:8px;justify-content:flex-end}
+  /* projection rows use flexbox so the name reliably takes the slack and the
+     stat cluster stays tight on the right (grid free-space distribution misbehaved) */
+  #tip .tl.pj{display:flex;align-items:center;gap:9px}
+  #tip .tl.pj .nm{flex:1 1 auto;min-width:0}
+  #tip .tl.pj .cr,#tip .tl.pj .rt{flex:none}
+  #tip .tl .rt{display:inline-flex;align-items:baseline;gap:8px}
   #tip .tl .nr{font-family:'Anton';font-weight:400;font-size:15px;color:#36d399;min-width:34px;text-align:right}
   #tip .tl .mv{font-family:'Barlow Semi Condensed';font-weight:700;font-size:12px;letter-spacing:.04em}
   #tip.proj{min-width:272px;max-width:340px}
-  #tip .tl .mv.up{color:#36d399}
-  #tip .tl .mv.flat{color:var(--ink-faint)}
+  #tip .tl .mv.mv-up{color:#36d399}
+  #tip .tl .mv.mv-flat{color:var(--ink-faint)}
   #tip .tt-foot{padding:8px 13px;border-top:1px solid var(--line);font-family:'Barlow Semi Condensed';
     font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
 
@@ -439,7 +444,7 @@ const INCLUDE_LIVE_IN_STANDINGS = false;
    ================================================================= */
 /* ---- runtime config (only this line differs between the live page and /demo/) ---- */
 const DEMO = true;                                  // demo/ page sets this to true
-const FEED_URL = '/.netlify/functions/scores';        // live ESPN feed (Netlify Function)
+const FEED_URL = '/api/scores';                       // live ESPN feed (Cloudflare Pages Function)
 
 // "Today" anchor: real local date when live; fixed QF day in the demo so badges show.
 const TODAY = DEMO ? '2026-07-05' : new Date().toLocaleDateString('en-CA');
@@ -822,8 +827,8 @@ function liveProjTip(m){
   } else {
     body = `<div class="tt-b">${movers.map(p=>{
       const jump = p.cur - p.proj;
-      const mv = jump>0 ? `<span class="mv up">▲${jump}</span>` : `<span class="mv flat">—</span>`;
-      return `<div class="tl" style="grid-template-columns:auto minmax(0,1fr) auto">
+      const mv = jump>0 ? `<span class="mv mv-up">▲${jump}</span>` : `<span class="mv mv-flat">—</span>`;
+      return `<div class="tl pj">
         <span class="cr">${ord(p.cur)}</span>
         <span class="nm">${esc(p.manager)}</span>
         <span class="rt"><span class="gain">+${p.add}<small>PTS</small></span>${mv}<span class="nr">${ord(p.proj)}</span></span>
