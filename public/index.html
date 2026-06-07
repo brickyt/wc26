@@ -100,6 +100,12 @@
     font-size:18px;color:var(--ink)}
   .phead .sub{font-family:'Barlow Semi Condensed';font-size:11px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--ink-faint);margin-left:auto}
+  /* same look as .sub, but sits next to the title (no margin-left:auto) */
+  .phead .note{font-family:'Barlow Semi Condensed';font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+  .phead .note a{color:var(--gold);text-decoration:underline}
+  .phead-standings{flex-wrap:wrap;row-gap:7px}
+  .phead-standings .note{flex-basis:100%}    /* note drops to its own line under the title */
+  #standings.noflags .rflags{display:none}   /* Flags toggle hides only the inline standings flags */
   .phead .livedot{width:9px;height:9px;border-radius:50%;background:var(--live);
     box-shadow:0 0 0 0 rgba(255,59,92,.6);animation:pulse 1.6s infinite}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,59,92,.55)}70%{box-shadow:0 0 0 9px rgba(255,59,92,0)}100%{box-shadow:0 0 0 0 rgba(255,59,92,0)}}
@@ -285,9 +291,12 @@
   <div class="grid">
     <!-- LEFT: Standings -->
     <section class="panel">
-      <div class="phead">
+      <div class="phead phead-standings">
         <h2>Standings</h2>
-        <span class="sub">Unofficial · confirmed pts only</span>
+        <button class="toggle" id="flagToggle" aria-pressed="true" title="Toggle team flags">
+          <span class="sw"></span><span class="lbl">Flags</span>
+        </button>
+        <span class="note">(Unofficial · Check the <a href="https://google.com" target="_blank" rel="noopener">spreadsheet</a> for official standings)</span>
       </div>
       <div class="standings" id="standings"></div>
     </section>
@@ -894,6 +903,15 @@ todayBtn.addEventListener('click', ()=>{
   todayBtn.setAttribute('aria-pressed', String(todayOnly));
   hideTip();
   render();
+});
+
+// Flags toggle: show/hide ONLY the inline standings flags (tooltips unaffected).
+const flagBtn = document.getElementById('flagToggle');
+const standEl = document.getElementById('standings');
+flagBtn.addEventListener('click', ()=>{
+  const nowOn = flagBtn.getAttribute('aria-pressed') !== 'true';  // flip
+  flagBtn.setAttribute('aria-pressed', String(nowOn));
+  standEl.classList.toggle('noflags', !nowOn);                    // hide flags when off
 });
 
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
