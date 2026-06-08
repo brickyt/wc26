@@ -211,6 +211,8 @@
   .up .when .d{font-weight:700;font-size:13px;color:var(--ink)}
   .up .when .t{font-size:11px;color:var(--ink-faint);letter-spacing:.04em}
   .up .vs{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;white-space:nowrap}
+  /* desktop: center the matchup within its column (it otherwise hugs the left, leaving dead space) */
+  @media(min-width:901px){ .up .vs{justify-content:center} }
   .up .vs .x{font-family:'Barlow Semi Condensed';font-size:11px;color:var(--ink-faint);letter-spacing:.1em}
 
   /* ---------- Completed ---------- */
