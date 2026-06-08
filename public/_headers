@@ -1,0 +1,13 @@
+# Cloudflare Pages response headers.
+# HTML pages get a short cache so the edge revalidates quickly (picks up new
+# deploys fast and keeps reloads fresh during live matches). The live data feed
+# at /api/scores is NOT covered here — the Pages Function sets its own adaptive
+# Cache-Control (60s while live, longer when idle), so it's left untouched.
+/
+  Cache-Control: public, max-age=30
+/index.html
+  Cache-Control: public, max-age=30
+/demo/
+  Cache-Control: public, max-age=30
+/demo/index.html
+  Cache-Control: public, max-age=30

@@ -71,6 +71,8 @@
   .feedpill.demo .dot{background:var(--gold);box-shadow:0 0 8px var(--gold)}
   .updated{font-size:12px;color:var(--ink-faint);font-family:'Barlow Semi Condensed';letter-spacing:.04em}
   .updated b{color:var(--ink-dim);font-weight:600}
+  /* fixed-width countdown number so the line doesn't shift as it ticks (1s vs 59s) */
+  #cd .cdn{display:inline-block;min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
   .updated .pdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:0}
   .updated.hot .pdot{background:var(--live);box-shadow:0 0 8px var(--live);animation:pulse 1.6s infinite}
   .updated.hot b{color:var(--live)}
@@ -218,6 +220,11 @@
   .res b{color:var(--ink-faint);font-weight:400}
   .res b.w{color:var(--gold)}
   .res .x{color:var(--ink-faint);margin:0 3px;font-size:13px}
+  /* completed cards: small per-match points under each team */
+  .completed .vs{align-items:flex-start}
+  .completed .cteam{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+  .completed .mpts{font-family:'Barlow Semi Condensed';font-weight:700;font-size:9px;letter-spacing:.06em;color:#36d399;white-space:nowrap}
+  .completed .mpts.zero{color:var(--ink-faint)}
 
   /* scrollbars */
   .standings::-webkit-scrollbar,.upcoming::-webkit-scrollbar,.completed::-webkit-scrollbar{width:8px}
@@ -712,11 +719,15 @@ function render(){
     const d = new Date(m.dt);
     const day = d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
     const hw = m.hs>m.as, aw = m.as>m.hs;
+    const pm = liveResultPts(m);                        // points each side earned from THIS match
+    const ptsTag = t => { const p = pm[t]||0; return `<span class="mpts${p>0?'':' zero'}">${p>0?'+'+p:'0'} ${ptl(p)}</span>`; };
     return `<div class="up">
       <div class="when"><div class="d">${day}</div><div class="t">FT</div>${stagePill(m)}</div>
-      <div class="vs">${teamChip(m.home)}
+      <div class="vs">
+        <div class="cteam">${teamChip(m.home)}${ptsTag(m.home)}</div>
         <span class="res"><b class="${hw?'w':''}">${m.hs}</b><span class="x">–</span><b class="${aw?'w':''}">${m.as}</b></span>
-        ${teamChip(m.away)}</div>
+        <div class="cteam">${teamChip(m.away)}${ptsTag(m.away)}</div>
+      </div>
     </div>`;
   }).join('') : `<div class="empty">No completed matches yet.</div>`;
 }
@@ -924,8 +935,9 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
    In production this same pollState() runs in the serverless poller
    that hits ESPN; clients just read its cache.
    ----------------------------------------------------------------- */
-const HOT_MS = 60000;          // hot cadence
+const HOT_MS = 60000;          // hot cadence — refresh every 60s while live / near kickoff
 const HOT_LEAD_MS = 10*60*1000; // treat "within 10 min of kickoff" as hot
+const IDLE_MS = 5*60*1000;     // when nothing's live, still re-check every 5 min (cap the sleep)
 function pollState(){
   const now = Date.now();
   const anyLive = MATCHES.some(m=>m.status==='live');
@@ -940,11 +952,16 @@ function pollState(){
 }
 
 const statusEl = document.getElementById('status');
+let nextUpdateAt = 0;                                   // ms timestamp of the next scheduled refresh
+const secsLeft = () => Math.max(0, Math.round((nextUpdateAt - Date.now())/1000));
+// Live countdown: tick every second, updating ONLY the number so the pulsing dot
+// isn't recreated/restarted each second.
+setInterval(()=>{ const cdn = document.querySelector('#cd .cdn'); if(cdn) cdn.textContent = secsLeft(); }, 1000);
 function updateStatus(st){
   const t = new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
   statusEl.className = 'updated ' + st.mode;
   if(st.mode==='hot'){
-    statusEl.innerHTML = `<span class="pdot"></span>Live · updated <b>${t}</b> · every <b>60s</b>`;
+    statusEl.innerHTML = `<span class="pdot"></span>Live · updated <b>${t}</b> · next update in <b id="cd"><span class="cdn">${secsLeft()}</span>s</b> · Page refreshes automatically`;
   }else if(st.mode==='sleep'){
     const when = new Date(st.wakeAt).toLocaleString('en-US',
       {weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
@@ -957,17 +974,19 @@ function updateStatus(st){
 let pollTimer = null;
 function scheduleNext(st){
   clearTimeout(pollTimer);
-  if(st.mode==='off') return;                         // stop entirely
-  const delay = st.mode==='hot' ? HOT_MS : (st.wakeAt - Date.now());
-  pollTimer = setTimeout(tick, Math.max(1000, delay)); // sleep straight to next kickoff
+  if(st.mode==='off'){ nextUpdateAt = 0; return; }    // stop entirely (tournament over)
+  // hot = every 60s; sleep = wait until the next kickoff, but re-check at least every 5 min
+  const delay = Math.max(1000, st.mode==='hot' ? HOT_MS : Math.min(st.wakeAt - Date.now(), IDLE_MS));
+  nextUpdateAt = Date.now() + delay;                   // drives the visible countdown
+  pollTimer = setTimeout(tick, delay);
 }
 
 async function tick(){
   MATCHES = await fetchData();
   render();
   const st = pollState();
-  updateStatus(st);
-  scheduleNext(st);
+  scheduleNext(st);   // sets nextUpdateAt first...
+  updateStatus(st);   // ...so the countdown starts from the full interval
 }
 // Re-sync when the user returns to the tab (mobile throttles background timers).
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) tick(); });
