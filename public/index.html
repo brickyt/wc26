@@ -302,6 +302,14 @@
   .legend b{color:var(--ink-dim);font-weight:700}
   .tapnote{display:none}
   @media(hover:none){.tapnote{display:inline}}
+  /* Official spreadsheet links: left-justified row, label + one clickable group
+     badge (1..8) reusing the standings pill style/colours. */
+  .sheetlinks{align-items:center;gap:8px 9px}
+  .sheetlinks .slabel{margin-right:2px}
+  .sbadge{font-size:11px;padding:3px 9px;text-decoration:none;cursor:pointer;
+    transition:transform .12s ease,box-shadow .12s ease,filter .12s ease}
+  .sbadge:hover{transform:translateY(-1px);filter:brightness(1.08);
+    box-shadow:0 5px 14px -5px rgba(0,0,0,.65)}
 </style>
 </head>
 <body>
@@ -325,7 +333,7 @@
         <button class="toggle" id="flagToggle" aria-pressed="true" title="Toggle team flags">
           <span class="sw"></span><span class="lbl">Flags</span>
         </button>
-        <span class="note">(Unofficial · Check the <a href="https://google.com" target="_blank" rel="noopener">spreadsheet</a> for official standings)</span>
+        <span class="note">(Unofficial · Check the spreadsheet links at the bottom of the page for official standings)</span>
       </div>
       <div class="standings" id="standings"></div>
     </section>
@@ -361,11 +369,16 @@
     </div>
   </div>
 
-  <div class="legend">
-    <span><b>Hover a manager</b> → their points by team <span class="tapnote">(tap on mobile)</span></span>
-    <span><b>Hover a team</b> → who owns it &amp; their standing <span class="tapnote">(tap on mobile)</span></span>
-    <span><b>Hover a live score</b> → projected pts if it holds <span class="tapnote">(tap on mobile)</span></span>
-    <span><b>Scoring:</b> Group W 3 / D 1 · KO win R32 3 · R16 6 · QF 9 · SF 12 · Final 15</span>
+  <div class="legend sheetlinks">
+    <span class="slabel"><b>Official Spreadsheet Links:</b></span>
+    <a class="pbadge sbadge" style="background:var(--gA);color:#0a0e1a" href="https://docs.google.com/spreadsheets/d/1BzuibEI75RlK2KZe4oOTzrWptDzrNeNtxRBOENQNw3s/edit?usp=sharing" target="_blank" rel="noopener" title="Group 1 spreadsheet" aria-label="Group 1 official spreadsheet">GRP 1</a>
+    <a class="pbadge sbadge" style="background:var(--gB);color:#fff" href="https://docs.google.com/spreadsheets/d/15rbsOMtt_BFEVGozbZ_R8PkW9mc4Hj0bvxlL26M1wgU/edit?usp=sharing" target="_blank" rel="noopener" title="Group 2 spreadsheet" aria-label="Group 2 official spreadsheet">GRP 2</a>
+    <a class="pbadge sbadge" style="background:var(--gC);color:#0a0e1a" href="https://docs.google.com/spreadsheets/d/1DsdpLxj7XkiDFl_lRK4gIE0QUmZT8QZZYeIFOjTbkI8/edit?usp=sharing" target="_blank" rel="noopener" title="Group 3 spreadsheet" aria-label="Group 3 official spreadsheet">GRP 3</a>
+    <a class="pbadge sbadge" style="background:var(--gD);color:#fff" href="https://docs.google.com/spreadsheets/d/1mdXL-RsvwBc_jStYZg-PGL7UpP4WKBQIBhrdlEBVYDM/edit?usp=sharing" target="_blank" rel="noopener" title="Group 4 spreadsheet" aria-label="Group 4 official spreadsheet">GRP 4</a>
+    <a class="pbadge sbadge" style="background:var(--gE);color:#fff" href="https://docs.google.com/spreadsheets/d/1pZXMf0J8Tk1m41PaBp4IMJkEce7UZ78aJntHapb6vmw/edit?usp=sharing" target="_blank" rel="noopener" title="Group 5 spreadsheet" aria-label="Group 5 official spreadsheet">GRP 5</a>
+    <a class="pbadge sbadge" style="background:var(--gF);color:#0a0e1a" href="https://docs.google.com/spreadsheets/d/17JEwYmTGQDU7AI03oXnJoTHve8kGSnhV9aCwD3nShNE/edit?usp=sharing" target="_blank" rel="noopener" title="Group 6 spreadsheet" aria-label="Group 6 official spreadsheet">GRP 6</a>
+    <a class="pbadge sbadge" style="background:var(--gG);color:#0a0e1a" href="https://docs.google.com/spreadsheets/d/12m0nbkhYZdpWTjkzap4wjdyBQgsQ7uiWVBjwouLmUwo/edit?usp=sharing" target="_blank" rel="noopener" title="Group 7 spreadsheet" aria-label="Group 7 official spreadsheet">GRP 7</a>
+    <a class="pbadge sbadge" style="background:var(--gH);color:#0a0e1a" href="https://docs.google.com/spreadsheets/d/1r4lsWdUUQFMZy3xGB6FjOtVy7n3zJBADODsuXqfLGQA/edit?usp=sharing" target="_blank" rel="noopener" title="Group 8 spreadsheet" aria-label="Group 8 official spreadsheet">GRP 8</a>
   </div>
 </div>
 
@@ -474,11 +487,16 @@ const POOLS = [
     'Nizzleaus':['Spain','Netherlands','Belgium','Switzerland','Mexico','Austria','Egypt','Iran'],
     'Jesse':['England','Germany','Colombia','Uruguay','Ecuador','Canada','Paraguay','South Korea'],
   }},
-  // Group 8 is still drafting — add its { id:'p8', name:'Group 8', managers:{...} } block when that image arrives.
+  { id:'p8', name:'Group 8', managers:{
+    'Derek':['Brazil','England','USA','Ecuador','Switzerland','Canada','Austria','Egypt'],
+    'UncleDrew4MVP':['Argentina','Germany','Belgium','Uruguay','Croatia','Türkiye','Ghana','South Korea'],
+    'Mackie':['France','Portugal','Netherlands','Japan','Mexico','Scotland','Sweden','Australia'],
+    'Kaprecia':['Spain','Senegal','Norway','Colombia','Morocco',"Côte d'Ivoire",'Paraguay','Czechia'],
+  }},
 ];
 const YOU = 'Ariaga II';
 // Pool badge colour: reuse the group palette (A..G) so each pool reads distinctly.
-const POOL_GRP = {p1:'A', p2:'B', p3:'C', p4:'D', p5:'E', p6:'F', p7:'G'};
+const POOL_GRP = {p1:'A', p2:'B', p3:'C', p4:'D', p5:'E', p6:'F', p7:'G', p8:'H'};
 
 // ----- Scoring -----
 const KO_PTS = {R32:3, R16:6, QF:9, SF:12, Final:15};
