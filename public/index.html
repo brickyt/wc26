@@ -120,6 +120,10 @@
     font-size:18px;color:var(--ink)}
   .phead .sub{font-family:'Barlow Semi Condensed';font-size:11px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--ink-faint);margin-left:auto}
+  /* ghost-outline status pill next to the Standings title — thin gold border, no fill */
+  .phead .utag{font-family:'Barlow Semi Condensed';font-weight:700;font-size:9px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--gold);border:1px solid rgba(255,206,77,.42);border-radius:6px;
+    padding:2px 7px;line-height:1;white-space:nowrap}
   /* same look as .sub, but sits next to the title (no margin-left:auto) */
   .phead .note{font-family:'Barlow Semi Condensed';font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
   .phead .note a{color:var(--gold);text-decoration:underline}
@@ -330,10 +334,11 @@
     <section class="panel">
       <div class="phead phead-standings">
         <h2>Standings</h2>
+        <span class="utag">Unofficial</span>
         <button class="toggle" id="flagToggle" aria-pressed="true" title="Toggle team flags">
           <span class="sw"></span><span class="lbl">Flags</span>
         </button>
-        <span class="note">(Unofficial · Check the spreadsheet links at the bottom of the page for official standings)</span>
+        <span class="note">(Check the spreadsheet links at the bottom of the page for official standings)</span>
       </div>
       <div class="standings" id="standings"></div>
     </section>
