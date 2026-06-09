@@ -97,6 +97,18 @@
   .panel:nth-child(2){animation-delay:.08s}
   .right>.panel+.panel{margin-top:20px}
   @keyframes rise{to{opacity:1;transform:none}}
+  /* Desktop: the right column stretches to the standings height; one panel grows to fill
+     the gap so the Completed frame's bottom lines up with the standings bottom.
+     grow-done = extend Completed (it has results); grow-up = extend Upcoming, pushing the
+     empty Completed frame down to the bottom. (Mobile stacks single-column — no effect.) */
+  @media(min-width:901px){
+    .right{display:flex;flex-direction:column}
+    .right>.panel{flex:0 0 auto}
+    .right.grow-up>.up-panel,
+    .right.grow-done>.done-panel{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+    .right.grow-up>.up-panel>.upcoming{flex:1 1 auto;min-height:0;max-height:none}
+    .right.grow-done>.done-panel>.completed{flex:1 1 auto;min-height:0;max-height:none}
+  }
 
   .phead{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line)}
   .phead h2{font-family:'Anton';font-weight:400;letter-spacing:1px;text-transform:uppercase;
@@ -324,7 +336,7 @@
         <div class="live-list" id="live"></div>
       </section>
 
-      <section class="panel">
+      <section class="panel up-panel">
         <div class="phead">
           <h2>Upcoming Matches</h2>
           <button class="toggle" id="todayToggle" aria-pressed="false">
@@ -334,7 +346,7 @@
         <div class="upcoming" id="upcoming"></div>
       </section>
 
-      <section class="panel">
+      <section class="panel done-panel">
         <div class="phead">
           <h2>Completed Matches</h2>
           <span class="sub">results</span>
@@ -751,6 +763,11 @@ function render(){
       </div>
     </div>`;
   }).join('') : `<div class="empty">No completed matches yet.</div>`;
+
+  // Pick which right-column panel fills the gap so Completed's bottom lines up with the
+  // standings bottom: Completed extends if it has results, otherwise Upcoming extends.
+  const rightEl = document.querySelector('.right');
+  if(rightEl){ rightEl.classList.toggle('grow-done', done.length>0); rightEl.classList.toggle('grow-up', done.length===0); }
 }
 
 function matchCard(m,isLive){
