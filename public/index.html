@@ -639,7 +639,10 @@ function teamPoints(team, {includeLive=false} = {}){
     if(m.stage==='group'){
       if(gf>ga) pts+=3; else if(gf===ga) pts+=1;
     }else{
-      if(gf>ga) pts += (KO_PTS[m.stage]||0);   // KO: points for the winner
+      // KO: credit the team that advanced. wonMatch uses the result's winner flag
+      // (set by /api/scores), so a penalty-shootout winner — level on the field —
+      // is scored correctly; it falls back to the score when no flag is present.
+      if(wonMatch(team, m)) pts += (KO_PTS[m.stage]||0);
     }
   }
   return pts;
