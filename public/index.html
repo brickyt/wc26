@@ -69,6 +69,7 @@
   .feedpill.ok .dot{background:#36d399;box-shadow:0 0 8px #36d399}
   .feedpill.warn .dot{background:var(--live);box-shadow:0 0 8px var(--live)}
   .feedpill.demo .dot{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+  .feedpill.sleep .dot{background:#5b6b8c;animation:pulse-grey 1.6s infinite}  /* sleeping: greyed, still pulses */
   .updated{font-size:12px;color:var(--ink-faint);font-family:'Barlow Semi Condensed';letter-spacing:.04em}
   .updated b{color:var(--ink-dim);font-weight:600}
   /* fixed-width countdown number so the line doesn't shift as it ticks (1s vs 59s) */
@@ -110,7 +111,9 @@
   #standings.noflags .rflags{display:none}   /* Flags toggle hides only the inline standings flags */
   .phead .livedot{width:9px;height:9px;border-radius:50%;background:var(--live);
     box-shadow:0 0 0 0 rgba(255,59,92,.6);animation:pulse 1.6s infinite}
+  .phead .livedot.idle{background:#5b6b8c;animation:pulse-grey 1.6s infinite}  /* greyed when nothing is live, still pulses */
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,59,92,.55)}70%{box-shadow:0 0 0 9px rgba(255,59,92,0)}100%{box-shadow:0 0 0 0 rgba(255,59,92,0)}}
+  @keyframes pulse-grey{0%{box-shadow:0 0 0 0 rgba(91,107,140,.55)}70%{box-shadow:0 0 0 9px rgba(91,107,140,0)}100%{box-shadow:0 0 0 0 rgba(91,107,140,0)}}
 
   /* ---------- Standings ---------- */
   .standings{max-height:78vh;overflow-y:auto;overflow-x:hidden}
@@ -436,17 +439,29 @@ const POOLS = [
     'Turbo Trevor':['England','Argentina','Belgium','Switzerland','Mexico','Türkiye','South Korea','Bosnia & Herzegovina'],
     'Texwrecks':['Spain','Germany','Netherlands','Uruguay','Ecuador','Sweden','Austria','Czechia'],
   }},
-  // Group 5 is still drafting — add its { id:'p5', name:'Group 5', managers:{...} } block when that image arrives.
+  { id:'p5', name:'Group 5', managers:{
+    'AG':['England','Brazil','USA','Norway','Ecuador','Sweden','Paraguay','Congo DR'],
+    'Scott K.':['Spain','Netherlands','Colombia','Mexico','Senegal','Türkiye','Scotland','Algeria'],
+    'Ribbinator':['Argentina','Portugal','Germany','Croatia','Japan','Egypt','South Korea',"Côte d'Ivoire"],
+    'Josh D.':['France','Morocco','Belgium','Switzerland','Uruguay','Canada','Austria','Iran'],
+  }},
   { id:'p6', name:'Group 6', managers:{
     'Dave R.':['Spain','Brazil','Norway','Colombia','Türkiye','Switzerland','Austria','South Korea'],
     'Birdman':['Argentina','Germany','Netherlands','Croatia','Canada','Egypt','Scotland','Saudi Arabia'],
     'Aries':['France','Belgium','Uruguay','USA','Ecuador',"Côte d'Ivoire",'Sweden','Ghana'],
     'Julian':['England','Portugal','Morocco','Japan','Mexico','Senegal','Paraguay','Algeria'],
   }},
+  { id:'p7', name:'Group 7', managers:{
+    'Peej':['Brazil','Argentina','Norway','USA','Japan','Senegal','Algeria','Ghana'],
+    'Mase':['France','Portugal','Morocco','Croatia','Türkiye','Sweden','Czechia',"Côte d'Ivoire"],
+    'Nizzleaus':['Spain','Netherlands','Belgium','Switzerland','Mexico','Austria','Egypt','Iran'],
+    'Jesse':['England','Germany','Colombia','Uruguay','Ecuador','Canada','Paraguay','South Korea'],
+  }},
+  // Group 8 is still drafting — add its { id:'p8', name:'Group 8', managers:{...} } block when that image arrives.
 ];
 const YOU = 'Ariaga II';
-// Pool badge colour: reuse the group palette (A..F) so each pool reads distinctly.
-const POOL_GRP = {p1:'A', p2:'B', p3:'C', p4:'D', p5:'E', p6:'F'};
+// Pool badge colour: reuse the group palette (A..G) so each pool reads distinctly.
+const POOL_GRP = {p1:'A', p2:'B', p3:'C', p4:'D', p5:'E', p6:'F', p7:'G'};
 
 // ----- Scoring -----
 const KO_PTS = {R32:3, R16:6, QF:9, SF:12, Final:15};
@@ -548,15 +563,17 @@ const MOCK_MATCHES = [
    Google Sheet as a manual override fallback.
    ================================================================= */
 let MATCHES = [];
+let liveFeedOk = false;            // last live fetch succeeded? (badge set in tick once mode is known)
 async function fetchData(){
   if (DEMO) { setFeed('demo'); return MOCK_MATCHES.map(m=>({...m})); }
   try {
     const r = await fetch(FEED_URL, { cache:'no-store' });
     if (!r.ok) throw new Error('HTTP '+r.status);
     const data = await r.json();
-    setFeed('live');
+    liveFeedOk = true;            // feed badge set in tick() once we know hot vs sleeping
     return Array.isArray(data.matches) ? data.matches : [];
   } catch (e) {
+    liveFeedOk = false;
     setFeed('error');
     return MATCHES;          // keep last-good data (empty on first load)
   }
@@ -565,10 +582,11 @@ function setFeed(state){
   const pill = document.getElementById('feedpill');
   const txt  = document.getElementById('feedtxt');
   if (!pill || !txt) return;
-  pill.classList.remove('ok','warn','demo');
-  if (state==='demo')      { txt.textContent='Demo · sample data'; pill.classList.add('demo'); }
-  else if (state==='live') { txt.textContent='Live · ESPN';        pill.classList.add('ok'); }
-  else                     { txt.textContent='Reconnecting…';      pill.classList.add('warn'); }
+  pill.classList.remove('ok','warn','demo','sleep');
+  if (state==='demo')       { txt.textContent='Demo · sample data'; pill.classList.add('demo'); }
+  else if (state==='live')  { txt.textContent='Live · ESPN';        pill.classList.add('ok'); }
+  else if (state==='sleep') { txt.textContent='Sleeping';           pill.classList.add('sleep'); }
+  else                      { txt.textContent='Reconnecting…';      pill.classList.add('warn'); }
 }
 
 /* =================================================================
@@ -695,6 +713,7 @@ function render(){
   // ----- Live (always all live; not affected by Today toggle) -----
   const live = MATCHES.filter(m=>m.status==='live');
   document.getElementById('livecount').textContent = live.length? `${live.length} matches in progress` : '';
+  const ld = document.querySelector('.phead .livedot'); if(ld) ld.classList.toggle('idle', live.length===0); // grey when nothing's in play
   const lEl = document.getElementById('live');
   lEl.innerHTML = live.length ? live.map(m=>matchCard(m,true)).join('')
     : `<div class="empty">No matches in play right now.</div>`;
@@ -967,7 +986,7 @@ function updateStatus(st){
   }else if(st.mode==='sleep'){
     const when = new Date(st.wakeAt).toLocaleString('en-US',
       {weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
-    statusEl.innerHTML = `<span class="pdot"></span>Sleeping · next update at <b>${when}</b>`;
+    statusEl.innerHTML = `<span class="pdot"></span>Next update at <b>${when}</b>`;
   }else{
     statusEl.innerHTML = `<span class="pdot"></span>Tournament complete · updates off`;
   }
@@ -989,6 +1008,8 @@ async function tick(){
   const st = pollState();
   scheduleNext(st);   // sets nextUpdateAt first...
   updateStatus(st);   // ...so the countdown starts from the full interval
+  // Live feed badge: "Live · ESPN" while actively polling, "Sleeping" between match days.
+  if(!DEMO && liveFeedOk) setFeed(st.mode==='hot' ? 'live' : 'sleep');
 }
 // Re-sync when the user returns to the tab (mobile throttles background timers).
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) tick(); });
