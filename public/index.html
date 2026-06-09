@@ -106,8 +106,13 @@
     .right>.panel{flex:0 0 auto}
     .right.grow-up>.up-panel,
     .right.grow-done>.done-panel{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
-    .right.grow-up>.up-panel>.upcoming{flex:1 1 auto;min-height:0;max-height:none}
-    .right.grow-done>.done-panel>.completed{flex:1 1 auto;min-height:0;max-height:none}
+    /* The growing list takes the LEFTOVER space (flex-basis:0), not its content
+       height, and `contain:size` keeps its long content out of the grid's auto-row
+       sizing — otherwise the row stretches to fit every match and overshoots the
+       standings with no scrollbar. So the panel's bottom lands exactly on the
+       standings bottom, and the list scrolls only when it's genuinely too tall. */
+    .right.grow-up>.up-panel>.upcoming,
+    .right.grow-done>.done-panel>.completed{flex:1 1 0;min-height:0;max-height:none;contain:size;overflow-y:auto}
   }
 
   .phead{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line)}
