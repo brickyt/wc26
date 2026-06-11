@@ -804,8 +804,14 @@ function render(){
 
   // Pick which right-column panel fills the gap so Completed's bottom lines up with the
   // standings bottom: Completed extends if it has results, otherwise Upcoming extends.
+  // Only when showing the full list — in "Today only" view the panels hug their (few)
+  // matches instead of stretching, so a short filtered list doesn't leave a big gap.
   const rightEl = document.querySelector('.right');
-  if(rightEl){ rightEl.classList.toggle('grow-done', done.length>0); rightEl.classList.toggle('grow-up', done.length===0); }
+  if(rightEl){
+    const grow = !todayOnly;
+    rightEl.classList.toggle('grow-done', grow && done.length>0);
+    rightEl.classList.toggle('grow-up',   grow && done.length===0);
+  }
 }
 
 function matchCard(m,isLive){
