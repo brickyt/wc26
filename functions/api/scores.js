@@ -141,6 +141,17 @@ function mapEvent(ev, entries, unresolved) {
     // The page shows it where the clock goes and credits the shootout leader.
     const hpk = homeC && homeC.shootoutScore, apk = awayC && awayC.shootoutScore;
     if (hpk != null || apk != null) m.pk = { h: Number(hpk) || 0, a: Number(apk) || 0 };
+    // Red cards from the match event log (`details`): count entries flagged
+    // redCard per side, joined on competitor team id. Catches straight reds AND
+    // second-yellow reds (verified: a 2nd yellow logs its own "Red Card" entry,
+    // so counting redCard:true never double-counts). Missing details -> no rc.
+    const hid = homeC && homeC.team && homeC.team.id;
+    const aid = awayC && awayC.team && awayC.team.id;
+    let rh = 0, ra = 0;
+    for (const x of (c.details || [])) {
+      if (x && x.redCard && x.team) { if (x.team.id === hid) rh++; else if (x.team.id === aid) ra++; }
+    }
+    if (rh || ra) m.rc = { h: rh, a: ra };
   }
   if (status === 'final') {
     // ESPN's authoritative result flag — correct even when a KO is decided on penalties

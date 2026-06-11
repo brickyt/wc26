@@ -75,6 +75,8 @@ cadence tightens automatically.
   plus?,                     // live only: stoppage minutes (e.g. 4 -> page shows 90'+4')
   clockText?,                // live only: ESPN clock verbatim when not parseable (e.g. "HT")
   pk?,                       // {h,a} shootout tally (live or final)
+  rc?,                       // {h,a} red-card counts (live or final; from ESPN `details`,
+                             //   incl. 2nd-yellow reds) -> page shows red card(s) above the flag
   winner? }                  // final only: 'home'|'away'|null (authoritative, pens-safe)
 // function also returns: { updated, matches:[...], unresolved:[...] }
 ```
