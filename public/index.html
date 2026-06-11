@@ -585,7 +585,7 @@ const MOCK_MATCHES = [
 
   // ===== LIVE · QUARTERFINAL · now (Jul 5) — QF badge, +9, live =====
   {stage:'QF',home:'England',away:'Netherlands',hs:1,as:0,status:'live',minute:63,dt:'2026-07-05T15:00:00'},
-  {stage:'QF',home:'Portugal',away:'Belgium',hs:0,as:0,status:'live',minute:55,dt:'2026-07-05T18:00:00'},
+  {stage:'QF',home:'Portugal',away:'Belgium',hs:0,as:0,status:'live',minute:90,plus:4,dt:'2026-07-05T18:00:00'},  // in stoppage: clock shows 90'+4'
 
   // ===== UPCOMING · later rounds (none today, so Today-only shows "No matches today") =====
   {stage:'SF',home:'Spain',away:'France',status:'pre',dt:'2026-07-09T19:00:00'},     // SF · +12
@@ -814,6 +814,13 @@ function render(){
   }
 }
 
+// Live clock display, in priority order (Option C hybrid):
+//   PK tally > parsed base+stoppage ("90'+16'") > ESPN clock verbatim ("HT") > plain minute.
+const liveClock = m => m.pk ? `PK ${m.pk.h}\u2013${m.pk.a}`
+  : m.clockText ? esc(m.clockText)
+  : m.plus ? `${m.minute}'+${m.plus}'`
+  : `${m.minute}'`;
+
 function matchCard(m,isLive){
   const si = stageInfo(m);
   const bandStyle = si.group ? ` style="background:var(${GCOLOR[si.group]});color:${GTX[si.group]}"` : '';
@@ -821,7 +828,7 @@ function matchCard(m,isLive){
     ? `<div class="sc">vs</div>`
     : `<div class="sc">${m.hs}<span class="x">–</span>${m.as}</div>`;
   // For a shootout, show the PK score where the live clock normally goes.
-  const clock = isLive ? `<div class="clock"><span class="d"></span>${m.pk ? `PK ${m.pk.h}\u2013${m.pk.a}` : `${m.minute}'`}</div>` : '';
+  const clock = isLive ? `<div class="clock"><span class="d"></span>${liveClock(m)}</div>` : '';
   return `<div class="match${isLive?' live':''}">
     <span class="gband ${si.cls}"${bandStyle}>${si.text}</span>
     <div class="team home">${teamChip(m.home)}</div>
@@ -924,7 +931,7 @@ function liveProjTip(m){
   const head = `<div class="tt-h">
       <span class="acc" style="background:var(--live)"></span>
       <div><div class="ttl">${abbr(m.home)} ${m.hs}–${m.as} ${abbr(m.away)}</div>
-           <div class="sub">${round} · if score holds · ${m.pk ? `PK ${m.pk.h}\u2013${m.pk.a}` : `${m.minute}'`}</div></div>
+           <div class="sub">${round} · if score holds · ${liveClock(m)}</div></div>
     </div>`;
   let body;
   if(!movers.length){

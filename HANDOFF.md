@@ -71,7 +71,11 @@ cadence tightens automatically.
   hs?, as?,                  // ints, present once not 'pre'
   status:'pre'|'live'|'final',
   dt,                        // ISO kickoff
-  minute? }                  // live only
+  minute?,                   // live only: base minute (e.g. 90)
+  plus?,                     // live only: stoppage minutes (e.g. 4 -> page shows 90'+4')
+  clockText?,                // live only: ESPN clock verbatim when not parseable (e.g. "HT")
+  pk?,                       // {h,a} shootout tally (live or final)
+  winner? }                  // final only: 'home'|'away'|null (authoritative, pens-safe)
 // function also returns: { updated, matches:[...], unresolved:[...] }
 ```
 

@@ -126,7 +126,10 @@ function mapEvent(ev, entries, unresolved) {
   const homeC = comp.find(x => x.homeAway === 'home') || comp[0];
   const awayC = comp.find(x => x.homeAway === 'away') || comp[1];
   const state = c.status && c.status.type && c.status.type.state; // pre | in | post
-  const status = state === 'in' ? 'live' : state === 'post' ? 'final' : 'pre';
+  // 'post' also covers postponed/abandoned — only an actually completed match is
+  // 'final' (otherwise a postponed 0-0 would bank phantom group-stage draw points).
+  const completed = !!(c.status && c.status.type && c.status.type.completed);
+  const status = state === 'in' ? 'live' : (state === 'post' && completed) ? 'final' : 'pre';
   const home = resolveTeam(homeC && homeC.team, unresolved);
   const away = resolveTeam(awayC && awayC.team, unresolved);
   const m = { stage: stageOf(c.date || ev.date, entries), home, away, status, dt: c.date || ev.date };
@@ -145,20 +148,36 @@ function mapEvent(ev, entries, unresolved) {
     m.winner = (homeC && homeC.winner) ? 'home' : (awayC && awayC.winner) ? 'away' : null;
   }
   if (status === 'live') {
-    const dc = ((c.status && c.status.displayClock) || '').replace(/[^0-9]/g, '');
-    m.minute = dc ? parseInt(dc, 10) : Math.round((c.status && c.status.clock) || 0);
+    // displayClock formats (verified vs real ESPN play-by-play): "63'", "45'+6'"
+    // (stoppage — the +n exists ONLY here; the numeric `clock` freezes at the
+    // period boundary), "HT". Hybrid parse:
+    //   parses        -> minute (base) + plus (stoppage, only when present)
+    //   doesn't parse -> clockText verbatim (e.g. "HT") for the page to show as-is
+    //   missing       -> minute from `clock`, which is in SECONDS (7200 at 120')
+    const raw = ((c.status && c.status.displayClock) || '').trim();
+    const t = /^(\d+)'?\s*(?:\+\s*(\d+))?/.exec(raw);
+    if (t) {
+      m.minute = parseInt(t[1], 10);
+      if (t[2]) m.plus = parseInt(t[2], 10);
+    } else {
+      if (raw) m.clockText = raw.slice(0, 12);     // "HT" etc.; capped defensively
+      m.minute = Math.round(((c.status && c.status.clock) || 0) / 60);
+    }
   }
   return m;
 }
 
+const KICK_GRACE_MS = 2 * 60 * 60 * 1000; // a 'pre' match that kicked off <2h ago is likely
+                                          // underway (delayed kickoff / ESPN slow to flip to
+                                          // 'in') — stay hot instead of sleeping to tomorrow.
 function maxAge(matches) {
   const now = Date.now();
   if (matches.some(m => m.status === 'live')) return 60;
   const kicks = matches.filter(m => m.status === 'pre' && m.dt)
-    .map(m => Date.parse(m.dt)).filter(t => t > now).sort((a, b) => a - b);
+    .map(m => Date.parse(m.dt)).filter(t => t > now - KICK_GRACE_MS).sort((a, b) => a - b);
   if (!kicks.length) return 3600;                 // tournament over
   const secs = Math.round((kicks[0] - now) / 1000);
-  if (secs <= 600) return 60;                      // within 10 min of kickoff
+  if (secs <= 600) return 60;                      // kicked off / within 10 min of kickoff
   return Math.min(secs, 1800);                     // sleep to next kickoff, cap 30 min
 }
 
