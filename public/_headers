@@ -11,3 +11,9 @@
   Cache-Control: public, max-age=30
 /demo/index.html
   Cache-Control: public, max-age=30
+
+# Country-flag polyfill font. Only requested by browsers lacking native flag
+# glyphs (Windows). Filename is stable, so cache it hard.
+/fonts/TwemojiCountryFlags.woff2
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: font/woff2
