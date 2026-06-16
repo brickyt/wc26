@@ -318,7 +318,58 @@
     transition:transform .12s ease,box-shadow .12s ease,filter .12s ease}
   .sbadge:hover{transform:translateY(-1px);filter:brightness(1.08);
     box-shadow:0 5px 14px -5px rgba(0,0,0,.65)}
+
+  /* Country-flag fix for Windows (Edge/Chrome/Firefox): route ONLY flag glyphs
+     through the polyfill font when it's present. The "Twemoji Country Flags"
+     family is undefined on systems with native flag support (Mac/iOS/Android/
+     Linux), so this line is a no-op there — text + generic flags fall through
+     to Saira exactly as before. See the polyfill script below. */
+  .rf,.fl{font-family:"Twemoji Country Flags","Saira",sans-serif}
 </style>
+<script>
+/* ---------------------------------------------------------------------------
+   Country-flag emoji polyfill — adapted from country-flag-emoji-polyfill
+   (MIT, © 2022 TalkJS). Self-hosted font at /fonts/TwemojiCountryFlags.woff2.
+
+   It injects the @font-face ONLY when the browser renders color emoji (e.g. 😊)
+   but FAILS to render a country flag (🇨🇭) — i.e. Windows. On every browser
+   with native flag support, nothing is injected and nothing changes. The
+   @font-face unicode-range is limited to regional indicators + the subdivision
+   flag base/tags, so generic flags (🚩 🏁 🏳️) are never affected, even on Windows.
+--------------------------------------------------------------------------- */
+(function () {
+  if (typeof window === 'undefined' || !document.createElement) return;
+  var STACK = '"Twemoji Mozilla","Apple Color Emoji","Segoe UI Emoji",'
+    + '"Segoe UI Symbol","Noto Color Emoji","EmojiOne Color","Android Emoji",sans-serif';
+  function ctx(){
+    var c = document.createElement('canvas'); c.width = c.height = 1;
+    var t = c.getContext('2d', { willReadFrequently: true });
+    t.textBaseline = 'top'; t.font = '100px ' + STACK; t.scale(0.01, 0.01);
+    return t;
+  }
+  function px(t, ch, color){
+    t.clearRect(0, 0, 100, 100); t.fillStyle = color; t.fillText(ch, 0, 0);
+    return t.getImageData(0, 0, 1, 1).data.join(',');
+  }
+  // A codepoint renders as a *color* emoji when the white-fill and black-fill
+  // pixels match (emoji ignores fillStyle) and the pixel isn't transparent-black.
+  function colorEmoji(ch){
+    var t = ctx(), w = px(t, ch, '#fff'), b = px(t, ch, '#000');
+    return b === w && b.indexOf('0,0,0,') !== 0;
+  }
+  try {
+    if (colorEmoji('\u{1F60A}') && !colorEmoji('\u{1F1E8}\u{1F1ED}')) {
+      var s = document.createElement('style');
+      s.textContent = '@font-face{font-family:"Twemoji Country Flags";'
+        + 'unicode-range:U+1F1E6-1F1FF,U+1F3F4,U+E0062-E0063,U+E0065,U+E0067,'
+        + 'U+E006C,U+E006E,U+E0073-E0074,U+E0077,U+E007F;'
+        + 'src:url("/fonts/TwemojiCountryFlags.woff2") format("woff2");'
+        + 'font-display:swap;}';
+      document.head.appendChild(s);
+    }
+  } catch (e) { /* canvas unavailable → leave native rendering untouched */ }
+})();
+</script>
 </head>
 <body>
 <div class="wrap">
