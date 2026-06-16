@@ -325,6 +325,13 @@
      Linux), so this line is a no-op there — text + generic flags fall through
      to Saira exactly as before. See the polyfill script below. */
   .rf,.fl{font-family:"Twemoji Country Flags","Saira",sans-serif}
+
+  /* "Jesse's special flag" deliberately opts OUT of the polyfill: it forces the
+     native OS emoji font (note: no "Twemoji Country Flags" here), so Edge/Windows
+     users get Segoe UI Emoji's own black-flag glyph — the pre-fix rendering — by
+     request, while country flags everywhere else still use the polyfill. */
+  .nflag{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Android Emoji",sans-serif;
+    font-size:21px;line-height:1;vertical-align:middle}
 </style>
 <script>
 /* ---------------------------------------------------------------------------
@@ -440,6 +447,12 @@
     <a class="pbadge sbadge" style="background:var(--gG);color:#0a0e1a" href="https://docs.google.com/spreadsheets/d/12m0nbkhYZdpWTjkzap4wjdyBQgsQ7uiWVBjwouLmUwo/edit?usp=sharing" target="_blank" rel="noopener" title="Group 7 spreadsheet" aria-label="Group 7 official spreadsheet">GRP 7</a>
     <a class="pbadge sbadge" style="background:var(--gH);color:#0a0e1a" href="https://docs.google.com/spreadsheets/d/1r4lsWdUUQFMZy3xGB6FjOtVy7n3zJBADODsuXqfLGQA/edit?usp=sharing" target="_blank" rel="noopener" title="Group 8 spreadsheet" aria-label="Group 8 official spreadsheet">GRP 8</a>
     <a class="pbadge sbadge" style="background:var(--gI);color:#fff" href="https://docs.google.com/spreadsheets/d/1acV7VKnKc2cb8cW_YkA613LorCk8kkKimhWrU2u-xZ0/edit?usp=sharing" target="_blank" rel="noopener" title="Group 9 spreadsheet" aria-label="Group 9 official spreadsheet">GRP 9</a>
+  </div>
+  <!-- Jesse's special flag: uses .nflag (native OS emoji font), so the black flag
+       renders as Segoe UI Emoji on Edge/Windows — not the Twemoji polyfill. -->
+  <div class="legend sheetlinks">
+    <span class="slabel"><b>Jesse's special flag:</b></span>
+    <span class="nflag" role="img" aria-label="black flag">🏴</span>
   </div>
 </div>
 
