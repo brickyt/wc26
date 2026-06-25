@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Best Ball World Cup 2026 — Group Standings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Semi+Condensed:wght@500;600;700&family=Saira:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
+<style>
+:root{
+  --bg:#0a0e1a; --bg2:#0e1426; --panel:#0d0f14; --panel-edge:#171b25;
+  --ink:#eaf0ff; --ink-dim:#8da0c8; --ink-faint:#5e6f96;
+  --gold:#ffce4d; --gold-deep:#e0a92b; --red:#f7194a; --line:rgba(255,255,255,.07);
+  --up:#3ee07a; --down:#ff4d68; --flat:#5e6f96;
+}
+*{box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+html,body{margin:0;background:#06070b}
+body{font-family:'Saira',system-ui,sans-serif;color:var(--ink);
+  display:flex;justify-content:center;padding:26px 18px 40px}
+#sheet{width:1480px;max-width:100%;background:
+  radial-gradient(1200px 700px at 50% -8%, #121a30 0%, rgba(18,26,48,0) 55%),
+  linear-gradient(180deg,#0b0e18 0%, #06070b 100%);
+  border-radius:22px;padding:30px 36px 26px;position:relative;overflow:hidden}
+
+/* ---- header ---- */
+header{text-align:center;margin-bottom:20px}
+.kicker{font-family:'Barlow Semi Condensed';font-weight:700;letter-spacing:.32em;
+  font-size:14px;color:var(--gold);text-transform:uppercase}
+h1{font-family:'Anton';font-weight:400;letter-spacing:.01em;margin:.12em 0 .04em;
+  font-size:62px;line-height:1;text-transform:uppercase}
+.sub{font-family:'Barlow Semi Condensed';font-weight:600;letter-spacing:.34em;
+  font-size:17px;color:var(--ink-dim);text-transform:uppercase}
+.pill{display:inline-block;margin-top:16px;background:var(--gold);color:#1c1406;
+  font-family:'Anton';letter-spacing:.06em;font-size:16px;text-transform:uppercase;
+  padding:8px 22px;border-radius:999px;box-shadow:0 0 22px rgba(255,206,77,.45)}
+
+/* ---- grid ---- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 26px;margin-top:22px}
+.col{display:flex;flex-direction:column;gap:18px}
+.card{position:relative;display:flex;background:var(--panel);
+  border:1px solid var(--panel-edge);border-radius:16px;min-height:150px;overflow:hidden}
+.card.r{flex-direction:row-reverse}
+.tab{flex:0 0 64px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tab .grp{font-family:'Barlow Semi Condensed';font-weight:700;letter-spacing:.22em;font-size:13px;
+  line-height:1;opacity:.9;margin-bottom:12px}
+.tab .no{font-family:'Anton';font-size:58px;line-height:1}
+.body{flex:1;padding:14px 18px 12px}
+
+.chead{display:flex;align-items:baseline;justify-content:space-between}
+.chead .gname{font-family:'Anton';font-size:26px;text-transform:uppercase;letter-spacing:.01em}
+.chead .md{font-family:'Barlow Semi Condensed';font-weight:600;letter-spacing:.14em;
+  font-size:12px;color:var(--ink-faint);text-transform:uppercase}
+.colhead{display:grid;grid-template-columns:1fr 46px 46px 52px;align-items:center;
+  margin:4px 0 6px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:11.5px;
+  letter-spacing:.12em;text-transform:uppercase}
+.colhead .ovr{color:var(--acc)}
+.colhead .lab{color:var(--ink-faint);text-align:right}
+
+.row{display:grid;grid-template-columns:1fr 46px 46px 52px;align-items:center;
+  padding:5px 8px;border-radius:9px;margin:0 -8px;border:1px solid transparent}
+.who{display:flex;align-items:center;gap:9px;min-width:0}
+.rk{font-family:'Anton';font-size:16px;color:var(--ink-faint);width:38px;flex:0 0 38px}
+.nm{font-family:'Saira';font-weight:700;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mv{font-family:'Barlow Semi Condensed';font-weight:700;font-size:12.5px;display:inline-flex;
+  align-items:center;gap:1px;flex:0 0 auto}
+.mv.up{color:var(--up)} .mv.down{color:var(--down)} .mv.flat{color:var(--flat)}
+.mv .ar{font-size:10px;line-height:1}
+.h2h{font-family:'Barlow Semi Condensed';font-weight:700;font-size:10px;letter-spacing:.08em;
+  color:#ff6e8c;border:1px solid rgba(247,25,74,.55);background:rgba(247,25,74,.12);
+  border-radius:5px;padding:1px 6px;flex:0 0 auto}
+.cur{font-family:'Anton';font-size:20px;text-align:right}
+.pot{font-family:'Saira';font-weight:700;font-size:15px;color:var(--ink-faint);text-align:right}
+.eff{font-family:'Anton';font-size:17px;text-align:right}
+
+/* group-leader highlight (accent tinted) */
+.row.lead{background:var(--acc-bg);border-color:var(--acc-bd)}
+.row.lead .rk,.row.lead .cur{color:var(--acc)}
+/* overall #1 (gold) overrides */
+.row.gold{background:linear-gradient(90deg, rgba(255,206,77,.16), rgba(255,206,77,.03));
+  border-color:rgba(255,206,77,.5)}
+.row.gold .rk,.row.gold .cur,.row.gold .nm{color:var(--gold)}
+
+/* ---- footer ---- */
+.foot{margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
+.foot .l1{font-family:'Saira';font-size:13px;color:var(--ink-dim);display:flex;
+  justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.foot .l1 .k{color:var(--ink-faint)} .foot .l1 b{color:var(--gold);font-weight:700}
+.foot .l1 a{color:#7ab4fa;font-weight:700;text-decoration:none;letter-spacing:.02em}
+.foot .l2{margin-top:7px;font-size:12.5px;color:var(--ink-dim);display:flex;
+  align-items:center;gap:8px;flex-wrap:wrap}
+.foot .l2 .upd{color:var(--ink-faint);margin-left:auto}
+.legkey{display:inline-flex;align-items:center;gap:5px;color:var(--ink-faint)}
+.legkey .ar{font-size:10px} .legkey .up{color:var(--up)} .legkey .down{color:var(--down)} .legkey .flat{color:var(--flat)}
+
+/* ---- export toolbar (not part of the captured sheet) ---- */
+.toolbar{position:fixed;top:16px;right:16px;z-index:50;display:flex;gap:10px}
+.toolbar button{font-family:'Barlow Semi Condensed',system-ui,sans-serif;font-weight:700;
+  letter-spacing:.04em;font-size:13px;text-transform:uppercase;cursor:pointer;
+  border-radius:10px;padding:10px 16px;border:1px solid rgba(255,255,255,.14);
+  color:#0f1320;background:var(--gold);box-shadow:0 6px 18px rgba(0,0,0,.4);
+  transition:transform .08s ease, filter .12s ease}
+.toolbar button.alt{background:#1a2236;color:var(--ink);border-color:#2a3554}
+.toolbar button:hover{filter:brightness(1.06)}
+.toolbar button:active{transform:translateY(1px)}
+.toolbar button:disabled{opacity:.7;cursor:default}
+@media print{.toolbar{display:none}}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button id="btnCopy" type="button">Copy image</button>
+  <button id="btnDl" class="alt" type="button">Download PNG</button>
+</div>
+<div id="sheet">
+  <header>
+    <div class="kicker">The North End Podcast's</div>
+    <h1>Best Ball World Cup 2026</h1>
+    <div class="sub">Group-by-Group Manager Standings</div>
+    <div class="pill">Matchday 2 Complete &nbsp;·&nbsp; Group Stage</div>
+  </header>
+  <div class="grid">
+    <div class="col" id="colL"></div>
+    <div class="col" id="colR"></div>
+  </div>
+  <div class="foot">
+    <div class="l1">
+      <div><span class="k">SCORING</span> &nbsp;WIN 3&nbsp; DRAW 1&nbsp; LOSS 0 &nbsp;&nbsp;&nbsp;
+        <b>CUR</b> current&nbsp;&nbsp; <b>POT</b> potential (2-MD max)&nbsp;&nbsp; <b>EFF</b> cur/pot</div>
+      <a href="https://northendwc26.pages.dev" target="_blank" rel="noopener">northendwc26.pages.dev</a>
+    </div>
+    <div class="l2">
+      <span class="h2h">H2H</span>
+      <span>owned BOTH teams in a group fixture — only one could win, so that pair's potential caps at 3.</span>
+      <span class="legkey">&nbsp;·&nbsp; Movement vs Matchday 1 overall rank:
+        <span class="up"><span class="ar">▲</span></span> up
+        <span class="down"><span class="ar">▼</span></span> down
+        <span class="flat">–</span> none</span>
+      <span class="upd">Live data · ESPN · updated 24 Jun 2026, 12:58 UTC</span>
+    </div>
+  </div>
+</div>
+<script>
+const DATA={"leader": ["Shnorb Jones"], "groups": {"Group 1": [{"ord": "8TH", "rank": 8, "name": "Jorge", "cur": 31, "pot": 45, "eff": 69, "h2h": 1, "md1_rank": 12, "move": 4}, {"ord": "8TH", "rank": 8, "name": "Dave S.", "cur": 31, "pot": 45, "eff": 69, "h2h": 1, "md1_rank": 6, "move": -2}, {"ord": "18TH", "rank": 18, "name": "Chris C.", "cur": 28, "pot": 48, "eff": 58, "h2h": 0, "md1_rank": 12, "move": -6}, {"ord": "28TH", "rank": 28, "name": "Cagle", "cur": 26, "pot": 45, "eff": 58, "h2h": 1, "md1_rank": 34, "move": 6}], "Group 2": [{"ord": "1ST", "rank": 1, "name": "Shnorb Jones", "cur": 37, "pot": 45, "eff": 82, "h2h": 1, "md1_rank": 5, "move": 4}, {"ord": "14TH", "rank": 14, "name": "Scott H.", "cur": 29, "pot": 45, "eff": 64, "h2h": 1, "md1_rank": 22, "move": 8}, {"ord": "18TH", "rank": 18, "name": "Derrick", "cur": 28, "pot": 42, "eff": 67, "h2h": 2, "md1_rank": 22, "move": 4}, {"ord": "36TH", "rank": 36, "name": "Sarah", "cur": 20, "pot": 45, "eff": 44, "h2h": 1, "md1_rank": 12, "move": -24}], "Group 3": [{"ord": "2ND", "rank": 2, "name": "Ariaga II", "cur": 33, "pot": 48, "eff": 69, "h2h": 0, "md1_rank": 1, "move": -1}, {"ord": "8TH", "rank": 8, "name": "Brian", "cur": 31, "pot": 42, "eff": 74, "h2h": 2, "md1_rank": 6, "move": -2}, {"ord": "18TH", "rank": 18, "name": "Tim", "cur": 28, "pot": 42, "eff": 67, "h2h": 2, "md1_rank": 29, "move": 11}, {"ord": "35TH", "rank": 35, "name": "Ryan", "cur": 23, "pot": 42, "eff": 55, "h2h": 2, "md1_rank": 22, "move": -13}], "Group 4": [{"ord": "6TH", "rank": 6, "name": "PMike", "cur": 32, "pot": 42, "eff": 76, "h2h": 2, "md1_rank": 29, "move": 23}, {"ord": "14TH", "rank": 14, "name": "Kyle", "cur": 29, "pot": 39, "eff": 74, "h2h": 3, "md1_rank": 12, "move": -2}, {"ord": "28TH", "rank": 28, "name": "Turbo Trevor", "cur": 26, "pot": 42, "eff": 62, "h2h": 2, "md1_rank": 6, "move": -22}, {"ord": "33RD", "rank": 33, "name": "Texwrecks", "cur": 24, "pot": 45, "eff": 53, "h2h": 1, "md1_rank": 22, "move": -11}], "Group 5": [{"ord": "2ND", "rank": 2, "name": "Ribbinator", "cur": 33, "pot": 45, "eff": 73, "h2h": 1, "md1_rank": 6, "move": 4}, {"ord": "18TH", "rank": 18, "name": "AG", "cur": 28, "pot": 45, "eff": 62, "h2h": 1, "md1_rank": 12, "move": -6}, {"ord": "25TH", "rank": 25, "name": "Josh D.", "cur": 27, "pot": 45, "eff": 60, "h2h": 1, "md1_rank": 22, "move": -3}, {"ord": "28TH", "rank": 28, "name": "Scott K.", "cur": 26, "pot": 48, "eff": 54, "h2h": 0, "md1_rank": 29, "move": 1}], "Group 6": [{"ord": "8TH", "rank": 8, "name": "Birdman", "cur": 31, "pot": 48, "eff": 65, "h2h": 0, "md1_rank": 20, "move": 12}, {"ord": "12TH", "rank": 12, "name": "Dave R.", "cur": 30, "pot": 48, "eff": 62, "h2h": 0, "md1_rank": 6, "move": -6}, {"ord": "18TH", "rank": 18, "name": "Julian", "cur": 28, "pot": 48, "eff": 58, "h2h": 0, "md1_rank": 36, "move": 18}, {"ord": "25TH", "rank": 25, "name": "Aries", "cur": 27, "pot": 45, "eff": 60, "h2h": 1, "md1_rank": 3, "move": -22}], "Group 7": [{"ord": "2ND", "rank": 2, "name": "Peej", "cur": 33, "pot": 42, "eff": 79, "h2h": 2, "md1_rank": 12, "move": 10}, {"ord": "14TH", "rank": 14, "name": "Nizzleaus", "cur": 29, "pot": 42, "eff": 69, "h2h": 2, "md1_rank": 22, "move": 8}, {"ord": "14TH", "rank": 14, "name": "Jesse", "cur": 29, "pot": 48, "eff": 60, "h2h": 0, "md1_rank": 12, "move": -2}, {"ord": "33RD", "rank": 33, "name": "Mase", "cur": 24, "pot": 48, "eff": 50, "h2h": 0, "md1_rank": 29, "move": -4}], "Group 8": [{"ord": "2ND", "rank": 2, "name": "Mackie", "cur": 33, "pot": 42, "eff": 79, "h2h": 2, "md1_rank": 2, "move": 0}, {"ord": "12TH", "rank": 12, "name": "Derek", "cur": 30, "pot": 48, "eff": 62, "h2h": 0, "md1_rank": 20, "move": 8}, {"ord": "25TH", "rank": 25, "name": "Kaprecia", "cur": 27, "pot": 45, "eff": 60, "h2h": 1, "md1_rank": 29, "move": 4}, {"ord": "28TH", "rank": 28, "name": "UncleDrew4MVP", "cur": 26, "pot": 48, "eff": 54, "h2h": 0, "md1_rank": 12, "move": -16}], "Group 9": [{"ord": "6TH", "rank": 6, "name": "Adrian Healey", "cur": 32, "pot": 45, "eff": 71, "h2h": 1, "md1_rank": 3, "move": -3}, {"ord": "18TH", "rank": 18, "name": "Coach Nick", "cur": 28, "pot": 42, "eff": 67, "h2h": 2, "md1_rank": 6, "move": -12}, {"ord": "18TH", "rank": 18, "name": "ZG", "cur": 28, "pot": 48, "eff": 58, "h2h": 0, "md1_rank": 22, "move": 4}, {"ord": "28TH", "rank": 28, "name": "E", "cur": 26, "pot": 45, "eff": 58, "h2h": 1, "md1_rank": 34, "move": 6}]}}, ACC={"Group 1": "#08e176", "Group 2": "#f7194a", "Group 3": "#f78f11", "Group 4": "#3954f6", "Group 5": "#5f02e6", "Group 6": "#c7fb0e", "Group 7": "#ef6193", "Group 8": "#64fcdb", "Group 9": "#aa46bb"}, DARK=new Set(["Group 8", "Group 7", "Group 3", "Group 6", "Group 1"]), LEFT=["Group 1", "Group 2", "Group 3", "Group 4", "Group 5"], RIGHT=["Group 6", "Group 7", "Group 8", "Group 9"], LEADER="Shnorb Jones";
+function hexToRgb(h){h=h.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function effColor(p){p=Math.max(40,Math.min(85,p));const hue=(p-40)/45*140;return `hsl(${hue} 72% 58%)`;}
+function num(g){return g.split(' ')[1];}
+function moveHTML(m){
+  if(m>0) return `<span class="mv up"><span class="ar">▲</span>${m}</span>`;
+  if(m<0) return `<span class="mv down"><span class="ar">▼</span>${-m}</span>`;
+  return `<span class="mv flat">–</span>`;
+}
+function card(g){
+  const acc=ACC[g], dark=DARK.has(g), rows=DATA.groups[g];
+  const [r,gn,b]=hexToRgb(acc);
+  const el=document.createElement('div');
+  el.className='card'+(RIGHT.includes(g)?' r':'');
+  el.style.setProperty('--acc',acc);
+  el.style.setProperty('--acc-bg',`rgba(${r},${gn},${b},.12)`);
+  el.style.setProperty('--acc-bd',`rgba(${r},${gn},${b},.45)`);
+  const tabtx = dark ? '#0a0e1a' : '#ffffff';
+  let rowsHTML='';
+  rows.forEach((x,i)=>{
+    const isGold = x.name===LEADER;
+    const isLead = i===0;            // top of THIS group
+    const cls = isGold ? 'row gold' : (isLead ? 'row lead' : 'row');
+    const ec = `style="color:${effColor(x.eff)}"`;  // EFF always uses value scale
+    rowsHTML+=`<div class="${cls}">
+      <div class="who">
+        <span class="rk">${x.ord}</span>
+        <span class="nm">${x.name}</span>
+        ${moveHTML(x.move)}
+        ${x.h2h?'<span class="h2h">H2H</span>':''}
+      </div>
+      <span class="cur">${x.cur}</span>
+      <span class="pot">${x.pot}</span>
+      <span class="eff" ${ec}>${x.eff}%</span>
+    </div>`;
+  });
+  el.innerHTML=`
+    <div class="tab" style="background:${acc};color:${tabtx}">
+      <div class="grp">GRP</div><div class="no">${num(g)}</div>
+    </div>
+    <div class="body">
+      <div class="chead"><div class="gname">${g}</div><div class="md">After Matchday 2</div></div>
+      <div class="colhead"><span class="ovr">OVR Standing</span><span class="lab">CUR</span><span class="lab">POT</span><span class="lab">EFF</span></div>
+      ${rowsHTML}
+    </div>`;
+  return el;
+}
+const colL=document.getElementById('colL'), colR=document.getElementById('colR');
+LEFT.forEach(g=>colL.appendChild(card(g)));
+RIGHT.forEach(g=>colR.appendChild(card(g)));
+
+/* ---------- image export (Copy to clipboard + Download PNG) ---------- */
+async function renderSheet(){
+  if(document.fonts && document.fonts.ready) await document.fonts.ready;
+  const sheet=document.getElementById('sheet');
+  return await html2canvas(sheet,{
+    scale:2,                       // crisp, full-resolution capture
+    backgroundColor:'#06070b',     // matches page bg behind rounded corners
+    useCORS:true,
+    width:sheet.scrollWidth,
+    height:sheet.scrollHeight,
+    windowWidth:sheet.scrollWidth,
+    logging:false
+  });
+}
+function canvasToBlob(canvas){
+  return new Promise(res=>canvas.toBlob(res,'image/png'));
+}
+function flash(btn,msg,ms){
+  const prev=btn.dataset.label||btn.textContent;
+  btn.dataset.label=prev;
+  btn.textContent=msg;
+  if(ms) setTimeout(()=>{btn.textContent=prev;btn.disabled=false;delete btn.dataset.label;},ms);
+}
+function triggerDownload(blob){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='wc26-standings-md2.png';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+const btnCopy=document.getElementById('btnCopy'), btnDl=document.getElementById('btnDl');
+btnCopy.addEventListener('click',async()=>{
+  btnCopy.disabled=true; flash(btnCopy,'Rendering…');
+  try{
+    const blob=await canvasToBlob(await renderSheet());
+    // Clipboard image write needs HTTPS/localhost + a real user gesture (this click).
+    if(!navigator.clipboard || !window.ClipboardItem) throw new Error('clipboard-unsupported');
+    await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+    flash(btnCopy,'Copied \u2713',2200);
+  }catch(err){
+    console.warn('Copy failed, downloading instead:',err);
+    try{ triggerDownload(await canvasToBlob(await renderSheet())); }catch(e){console.error(e);}
+    flash(btnCopy,'Saved PNG instead \u2713',2600);
+  }
+});
+btnDl.addEventListener('click',async()=>{
+  btnDl.disabled=true; flash(btnDl,'Rendering…');
+  try{
+    triggerDownload(await canvasToBlob(await renderSheet()));
+    flash(btnDl,'Saved \u2713',2200);
+  }catch(err){ console.error(err); flash(btnDl,'Failed',2200); }
+});
+</script>
+</body>
+</html>

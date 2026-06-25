@@ -737,6 +737,14 @@ function managerPoints(teams){ return teams.reduce((s,t)=>s+teamPoints(t),0); }
      - group stage settled into the R32 and team isn't in it      -> out
      - otherwise (transition gap / advanced, next slot still TBD) -> lit  */
 const KO_STAGES = new Set(['R32','R16','QF','SF','Final']);   // advancement rounds (3rd-place excluded)
+/* Manual elimination override — for the in-between window where a team is already
+   mathematically out AND done playing, but ESPN hasn't populated the R32 bracket
+   yet (r32Ready() still false), so the auto-logic can't tell it apart from a team
+   that advanced and is just awaiting its draw slot. List CANONICAL team names
+   (exactly as in GROUPS/FLAG). Safe to clear once the full R32 is drawn — the
+   auto-logic then fades these same teams. Only list teams you KNOW are out; a
+   wrong entry will fade a still-alive team. */
+const MANUAL_OUT = new Set(['Czechia','Qatar','Haiti']);
 function wonMatch(team, m){
   if(m.winner) return (m.winner==='home' && m.home===team) || (m.winner==='away' && m.away===team);
   const isHome = m.home===team;                                // fallback (e.g. demo data): compare score
@@ -757,6 +765,7 @@ function r32Ready(){                                           // every R32 slot
   return r.length>0 && r.every(m => m.home && m.away);
 }
 function isOut(team){
+  if(MANUAL_OUT.has(team)) return true;                       // hand-fed elimination (see MANUAL_OUT note)
   if(hasUpcoming(team)) return false;                         // still has a match to play
   if(lostKO(team)) return true;                               // knocked out of the bracket
   if(r32Ready() && !inAnyKO(team)) return true;              // group over, bracket set, didn't qualify
