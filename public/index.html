@@ -250,6 +250,7 @@
   .res b{color:var(--ink-faint);font-weight:400}
   .res b.w{color:var(--gold)}
   .res .x{color:var(--ink-faint);margin:0 3px;font-size:13px}
+  .res .pk{font-size:.7em;letter-spacing:0;margin-left:2px}   /* shootout tally, inherits b colour */
   /* completed cards: small per-match points under each team */
   .completed .vs{align-items:flex-start}
   .completed .cteam{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
@@ -866,14 +867,15 @@ function render(){
   cEl.innerHTML = done.length ? done.map(m=>{
     const d = new Date(m.dt);
     const day = d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    const hw = m.hs>m.as, aw = m.as>m.hs;
+    const hw = m.pk ? m.pk.h>m.pk.a : m.hs>m.as,   // a penalty shootout decides a level KO
+          aw = m.pk ? m.pk.a>m.pk.h : m.as>m.hs;
     const pm = liveResultPts(m);                        // points each side earned from THIS match
     const ptsTag = t => { const p = pm[t]||0; return `<span class="mpts${p>0?'':' zero'}">${p>0?'+'+p:'0'} ${ptl(p)}</span>`; };
     return `<div class="up">
       <div class="when"><div class="d">${day}</div><div class="t">FT</div>${stagePill(m)}</div>
       <div class="vs">
         <div class="cteam">${teamChip(m.home, m.rc&&m.rc.h)}${ptsTag(m.home)}</div>
-        <span class="res"><b class="${hw?'w':''}">${m.hs}</b><span class="x">–</span><b class="${aw?'w':''}">${m.as}</b></span>
+        <span class="res"><b class="${hw?'w':''}">${m.hs}${m.pk?`<span class="pk">(${m.pk.h})</span>`:''}</b><span class="x">–</span><b class="${aw?'w':''}">${m.as}${m.pk?`<span class="pk">(${m.pk.a})</span>`:''}</b></span>
         <div class="cteam">${teamChip(m.away, m.rc&&m.rc.a)}${ptsTag(m.away)}</div>
       </div>
     </div>`;
@@ -1009,7 +1011,7 @@ function liveProjTip(m){
               : `${m.stage} · ${KO_PTS[m.stage]||0} ${ptl(KO_PTS[m.stage]||0).toLowerCase()}`;
   const head = `<div class="tt-h">
       <span class="acc" style="background:var(--live)"></span>
-      <div><div class="ttl">${abbr(m.home)} ${m.hs}–${m.as} ${abbr(m.away)}</div>
+      <div><div class="ttl">${abbr(m.home)} ${m.hs}${m.pk?`(${m.pk.h})`:''}–${m.as}${m.pk?`(${m.pk.a})`:''} ${abbr(m.away)}</div>
            <div class="sub">${round} · if score holds · ${liveClock(m)}</div></div>
     </div>`;
   let body;
