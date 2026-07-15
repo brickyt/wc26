@@ -745,7 +745,7 @@ const KO_STAGES = new Set(['R32','R16','QF','SF','Final']);   // advancement rou
    (exactly as in GROUPS/FLAG). Safe to clear once the full R32 is drawn — the
    auto-logic then fades these same teams. Only list teams you KNOW are out; a
    wrong entry will fade a still-alive team. */
-const MANUAL_OUT = new Set(['Czechia','Qatar','Haiti','Türkiye','Curaçao','Tunisia','New Zealand','Saudi Arabia','Iraq','Jordan','Panama','Uruguay','Scotland','South Korea','Uzbekistan','Iran']);
+const MANUAL_OUT = new Set(['Czechia','Qatar','Haiti','Türkiye','Curaçao','Tunisia','New Zealand','Saudi Arabia','Iraq','Jordan','Panama','Uruguay','Scotland','South Korea','Uzbekistan','Iran',"England","France"]);
 function wonMatch(team, m){
   if(m.winner) return (m.winner==='home' && m.home===team) || (m.winner==='away' && m.away===team);
   const isHome = m.home===team;                                // fallback (e.g. demo data): compare score
